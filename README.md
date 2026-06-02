@@ -1,4 +1,3 @@
-[README (4).md](https://github.com/user-attachments/files/28509177/README.4.md)
 # The Abeselom ASIC-Direct 50 (AAD-50)
 
 <p align="center">
