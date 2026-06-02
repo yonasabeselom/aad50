@@ -6,10 +6,9 @@
 
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 
-**Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology
-**Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom
-
-**Version:** 1.0 — June 2026
+**Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
+**Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom  
+**Version:** 1.0 — June 2026  
 **Status:** Open for peer review
 
 ---
