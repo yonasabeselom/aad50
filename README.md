@@ -1,3 +1,4 @@
+[README.md](https://github.com/user-attachments/files/28505374/README.md)
 # The Abeselom ASIC-Direct 50 (AAD-50)
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology
@@ -15,7 +16,11 @@ The result is a mathematically provable, forensically irreversible, and fully au
 
 ---
 
-## The Problem
+## How AAD-50 Works — Step by Step
+
+![AAD-50 Step-by-Step Process](AAD50_Process_Infographic.png)
+
+---
 
 Traditional data sanitization standards (DoD 5220.22-M, Gutmann 35-pass) were engineered for magnetic hard disk drives. On solid-state drives, they are fundamentally ineffective.
 
