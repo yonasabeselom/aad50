@@ -1,9 +1,12 @@
+[README (3).md](https://github.com/user-attachments/files/28509098/README.3.md)
 # The Abeselom ASIC-Direct 50 (AAD-50)
 
 <p align="center">
   <img src="AAD50_Logo.png" alt="AAD-50 Official Logo" width="600"/>
 </p>
+
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
+
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom
 **Version:** 1.0 — June 2026
