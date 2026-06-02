@@ -1,4 +1,4 @@
-[README (3).md](https://github.com/user-attachments/files/28509098/README.3.md)
+[README (4).md](https://github.com/user-attachments/files/28509177/README.4.md)
 # The Abeselom ASIC-Direct 50 (AAD-50)
 
 <p align="center">
@@ -9,6 +9,7 @@
 
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom
+
 **Version:** 1.0 — June 2026
 **Status:** Open for peer review
 
