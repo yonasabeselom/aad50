@@ -41,7 +41,10 @@ Recovering this data via chip-level hardware extraction or Magnetic Force Micros
 
 ## The AAD-50 Solution
 
-AAD-50 bypasses the OS and communicates directly with the drive controller via the Linux kernel's `nvme_admin_cmd` IOCTL interface (`0xC0484E41`), issuing native NVMe Sanitize commands (Opcode `0x84`) that the on-chip ASIC executes internally at silicon speeds.
+AAD-50 bypasses the OS and communicates directly with the drive controller via firmware-level NVMe Sanitize commands (Opcode `0x84`) that the on-chip ASIC executes internally at silicon speeds.
+
+- **Linux:** via the kernel's `nvme_admin_cmd` IOCTL interface (`0xC0484E41`)
+- **Windows:** via `DeviceIoControl` with `IOCTL_STORAGE_PROTOCOL_COMMAND` (`0x0002D14C`)
 
 ### Phase Execution Matrix
 
@@ -76,15 +79,30 @@ This is the architectural detail that distinguishes AAD-50 from naive multi-pass
 
 ## Reference Implementation
 
-The reference implementation targets **Linux kernel 5.15+** systems with NVMe driver support. It requires root privileges to open raw NVMe controller handles. **The current implementation is Linux-only.** A Windows port via the `DeviceIoControl` API (`IOCTL_STORAGE_PROTOCOL_COMMAND`) is a planned future direction — see the whitepaper Section 10 for the full deployment roadmap.
+AAD-50 is available as a reference implementation on both **Linux** and **Windows**. Both versions execute the identical 50-cycle B → C → A destruction matrix via firmware-level NVMe Sanitize commands — only the OS interface layer differs.
 
-### Requirements
+| File | Platform | Interface | Status |
+|---|---|---|---|
+| `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL (`0xC0484E41`) | Stable |
+| `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` (`IOCTL_STORAGE_PROTOCOL_COMMAND`) | Beta |
+
+> **Windows Beta status:** The Windows port implements the identical AAD-50 protocol via the Windows-equivalent API pathway. Hardware testing across NVMe manufacturers is ongoing. If you test it on a real drive, please open a GitHub Issue with your results — your feedback directly contributes to validating the specification.
+
+### Linux Requirements
 
 - Python 3.10+
 - Linux kernel 5.15+
 - Root / sudo access
 - Target: NVMe controller node (e.g. `/dev/nvme0`, not a namespace node like `/dev/nvme0n1`)
 - Optional: `nvme-cli` for drive model identification
+
+### Windows Requirements
+
+- Python 3.10+
+- Windows 10 version 1607+ / Windows 11 / Windows Server 2016+
+- Administrator privileges (right-click → Run as administrator)
+- Target: Physical NVMe drive (e.g. `\\.\PhysicalDrive0`)
+- No external Python dependencies — standard library only
 
 ### Installation
 
@@ -93,11 +111,14 @@ git clone https://github.com/yonasabeselom/aad50
 cd aad50
 ```
 
-No external Python dependencies. The implementation uses only the standard library.
+No external Python dependencies on either platform. Both implementations use only the standard library.
 
-### Usage
+### Linux Usage
 
 ```bash
+# List available NVMe drives
+sudo python3 aad50_abeselom.py --help
+
 # Standard interactive execution
 sudo python3 aad50_abeselom.py /dev/nvme0
 
@@ -111,9 +132,28 @@ sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log --force
 sudo python3 aad50_abeselom.py /dev/nvme0 --dry-run --verbose
 ```
 
+### Windows Usage
+
+```powershell
+# List all detected NVMe drives
+python aad50_abeselom_windows.py --list
+
+# Standard interactive execution
+python aad50_abeselom_windows.py \\.\PhysicalDrive0
+
+# With full execution log and JSON audit report
+python aad50_abeselom_windows.py \\.\PhysicalDrive0 --log C:\logs\aad50.log
+
+# Non-interactive mode for automated deprovisioning pipelines
+python aad50_abeselom_windows.py \\.\PhysicalDrive0 --log C:\logs\aad50.log --force
+
+# Simulate the full 50-cycle sequence without issuing any commands
+python aad50_abeselom_windows.py \\.\PhysicalDrive0 --dry-run --verbose
+```
+
 ### Authorization
 
-In interactive mode, the tool requires the operator to type the following token exactly before any destructive command is issued:
+In interactive mode, both versions require the operator to type the following token exactly before any destructive command is issued:
 
 ```
 EXECUTE-AAD-50-ABESELOM
@@ -127,6 +167,7 @@ EXECUTE-AAD-50-ABESELOM
 - **SHA-256 tamper-evident audit report** for chain-of-custody compliance
 - Non-interactive `--force` flag for automated deprovisioning pipelines
 - `--dry-run` simulation mode for pre-deployment validation
+- Windows `--list` flag to enumerate all detected NVMe drives
 
 ---
 
