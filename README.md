@@ -260,7 +260,6 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 ---
 
-## Changelog
 
 ## Changelog
 
