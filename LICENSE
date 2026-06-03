@@ -1,0 +1,104 @@
+AAD-50 DUAL LICENSE
+====================
+
+Copyright (c) 2026, Yonas Abeselom (yonas_abeselom@protonmail.com)
+All rights reserved.
+
+================================================================================
+PART 1 — THE SPECIFICATION AND WHITEPAPER
+(Applies to: AAD50_Abeselom_Whitepaper.pdf, README.md, and all
+specification documentation in this repository)
+================================================================================
+
+Licensed under Creative Commons Attribution 4.0 International (CC BY 4.0).
+
+You are free to:
+  - Share   — copy and redistribute the material in any medium or format
+  - Adapt   — remix, transform, and build upon the material for any purpose,
+               even commercially
+
+Under the following terms:
+  - Attribution — You must give appropriate credit to Yonas Abeselom as the
+                  original author of The Abeselom ASIC-Direct 50 (AAD-50),
+                  provide a link to https://github.com/yonasabeselom/aad50,
+                  and indicate if changes were made. You may do so in any
+                  reasonable manner, but not in any way that suggests the
+                  licensor endorses you or your use.
+
+Full licence text: https://creativecommons.org/licenses/by/4.0/
+
+================================================================================
+PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
+(Applies to: aad50_abeselom.py, aad50_abeselom_windows.py, and all
+Python source files in this repository)
+================================================================================
+
+PROPRIETARY LICENCE — ALL RIGHTS RESERVED
+
+1. PERMITTED USE
+   You may:
+   - View and read the source code for educational and research purposes
+   - Run the software on hardware you own for personal, non-commercial use
+   - Reference the code in academic papers, provided you cite the original
+     author and repository
+
+2. RESTRICTIONS
+   You may NOT, without prior written permission from Yonas Abeselom:
+   - Redistribute, publish, or share the source code in any form
+   - Modify, adapt, or create derivative works based on the source code
+   - Incorporate the source code into any other software product
+   - Use the source code for any commercial purpose
+   - Remove or alter any copyright, authorship, or licence notices
+
+3. CONTRIBUTIONS AND PEER REVIEW
+   Technical feedback, bug reports, and peer review submitted via GitHub
+   Issues are welcome and encouraged. Submitting feedback does not grant
+   the submitter any rights over the source code or specification.
+
+4. HARDWARE TESTING
+   If you test this software on real NVMe hardware, you are encouraged
+   to report your results via GitHub Issues at:
+   https://github.com/yonasabeselom/aad50/issues
+   Reporting results is voluntary and does not transfer any rights.
+
+5. FUTURE LICENSING
+   The author reserves the right to offer the source code under
+   alternative licence terms (including commercial licences) at any time.
+
+6. NO WARRANTY
+   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
+   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+   CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS
+   SOFTWARE.
+
+7. DATA DESTRUCTION WARNING
+   THIS SOFTWARE IS DESIGNED TO PERMANENTLY AND IRREVERSIBLY DESTROY
+   ALL DATA ON THE TARGET DEVICE. THE AUTHOR ACCEPTS NO LIABILITY FOR
+   DATA LOSS RESULTING FROM THE USE OR MISUSE OF THIS SOFTWARE. USE
+   ONLY ON DEVICES YOU OWN AND INTEND TO FULLY ERASE.
+
+================================================================================
+CONTACT FOR LICENSING ENQUIRIES
+================================================================================
+
+For commercial licensing, partnership enquiries, or written permission
+requests, contact:
+
+  Yonas Abeselom
+  yonas_abeselom@protonmail.com
+  https://github.com/yonasabeselom/aad50
+
+================================================================================
+CITATION
+================================================================================
+
+If you reference AAD-50 in academic or technical work, please cite as:
+
+  Y. Abeselom, "The Abeselom ASIC-Direct 50 (AAD-50): A Firmware-Enforced,
+  50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
+  Version 1.0, June 2026.
+  [Online]. Available: https://github.com/yonasabeselom/aad50
+
+================================================================================
