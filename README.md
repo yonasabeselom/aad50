@@ -97,8 +97,31 @@ AAD-50 is available as a reference implementation on both **Linux** and **Window
 |---|---|---|---|
 | `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL (`0xC0484E41`) | Stable |
 | `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` (`IOCTL_STORAGE_PROTOCOL_COMMAND`) | Beta |
+| `aad50_gui_windows.py` | Windows 10 1607+ / 11 | GUI — requires `aad50_abeselom_windows.py` | Beta |
 
 > **Windows Beta status:** The Windows port implements the identical AAD-50 protocol via the Windows-equivalent API pathway. Hardware testing across NVMe manufacturers is ongoing. If you test it on a real drive, please open a GitHub Issue with your results — your feedback directly contributes to validating the specification.
+
+### GUI Application
+
+The Windows GUI application (`aad50_gui_windows.py`) provides a full graphical interface for AAD-50 with five screens:
+
+- **Home Dashboard** — phase matrix, stats, and quick start
+- **Select Drive** — auto-detects all NVMe drives with model, path, and volume labels
+- **Sanitize Drive** — destruction warning shield, authorization token, live 50-cycle progress dashboard
+- **Audit Reports** — load and verify any saved JSON audit report via SHA-256 hash recalculation
+- **About** — tool information, compliance standards, OEM driver diagnostic
+
+**GUI Requirements:**
+```
+pip install customtkinter
+```
+
+Both `aad50_gui_windows.py` and `aad50_abeselom_windows.py` must be in the same folder.
+
+**Run the GUI:**
+```
+python aad50_gui_windows.py
+```
 
 ### Linux Requirements
 
@@ -266,6 +289,7 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 - Windows Beta dry-run confirmed working on WD PC SN730 SDBQNTY-256G-1001 (\\.\PhysicalDrive0, Windows 11) — [Issue #1](https://github.com/yonasabeselom/aad50/issues/1)
 - Linux dry-run confirmed working on GitHub Codespaces — [Issue #2](https://github.com/yonasabeselom/aad50/issues/2)
 - Both platforms validated — identical 50-cycle B → C → A sequence confirmed on Linux and Windows
+- Windows GUI application added (`aad50_gui_windows.py`) — full graphical interface with 5 screens, live progress dashboard, SHA-256 audit verifier, OEM driver diagnostic
 - Windows SHA-256 audit hash: `7d395c5eae31eed97a1929bd4ec2d22fc45aeaff256e6b871790f527a9965116`
 - Linux SHA-256 audit hash: `f8432896cebfc6aa843d22f155b6d55d224eb43b0ba45506aa7a07758913cb1f`
 
