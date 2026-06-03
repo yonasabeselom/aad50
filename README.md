@@ -27,6 +27,8 @@ The result is a mathematically provable, forensically irreversible, and fully au
 
 ---
 
+## The Problem
+
 Traditional data sanitization standards (DoD 5220.22-M, Gutmann 35-pass) were engineered for magnetic hard disk drives. On solid-state drives, they are fundamentally ineffective.
 
 The Flash Translation Layer (FTL) constantly intercepts host writes and redirects data to fresh physical blocks. When standard software attempts to overwrite a drive, the target data is not destroyed — it is merely unmapped. The original data remains fully intact in:
@@ -228,6 +230,30 @@ The full technical whitepaper — formatted to IEEE double-column standard — i
 
 Copyright © 2026, Yonas Abeselom. All rights reserved.
 Redistribution or modification requires written permission from the author.
+
+---
+
+## Contributing
+
+Contributions and hardware testing reports are welcome. The highest priority areas are:
+
+- **Windows Beta hardware testing** — if you run `aad50_abeselom_windows.py` on a real NVMe drive, please open a GitHub Issue with your drive model, Windows version, and whether the sequence completed successfully. Every test result directly contributes to validating the specification across manufacturers.
+- **Linux driver compatibility** — reports of drives where Log Page 0x81 polling behaves unexpectedly are valuable for improving SSTAT handling.
+- **Technical peer review** — open a GitHub Issue for any corrections or improvements to the protocol specification, struct layout, or phase ordering rationale.
+
+Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or contact directly at **yonas_abeselom@protonmail.com**.
+
+---
+
+## Changelog
+
+### v1.0 — June 2026
+- Initial release — Linux reference implementation (Stable)
+- Windows port (Beta) — `DeviceIoControl` / `IOCTL_STORAGE_PROTOCOL_COMMAND`
+- IEEE double-column format technical whitepaper
+- Step-by-step process infographic
+- SHA-256 tamper-evident audit report
+- Log Page 0x81 async polling — hardware-confirmed cycle completion
 
 ---
 
