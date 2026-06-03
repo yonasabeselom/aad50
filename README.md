@@ -228,8 +228,13 @@ The full technical whitepaper — formatted to IEEE double-column standard — i
 
 ## License
 
-Copyright © 2026, Yonas Abeselom. All rights reserved.
-Redistribution or modification requires written permission from the author.
+AAD-50 uses a dual licence — see the [LICENSE](./LICENSE) file for full terms.
+
+**Specification and Whitepaper** — Licensed under [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). You may share, reference, and build upon the specification freely, provided you credit Yonas Abeselom as the original author and link to this repository.
+
+**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`) — Proprietary. You may read and run the code for personal, non-commercial use. Redistribution, modification, or commercial use requires written permission from the author.
+
+For licensing enquiries: **yonas_abeselom@protonmail.com**
 
 ---
 
