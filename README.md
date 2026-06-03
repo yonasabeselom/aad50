@@ -247,10 +247,14 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 ## Changelog
 
+## Changelog
+
 ### v1.0.1 — June 3, 2026
-- Windows Beta dry-run confirmed working on WD PC SN730 SDBQNTY-256G-1001 (\\.\PhysicalDrive0, Windows 11)
-- First hardware validation record — [Issue #1](https://github.com/yonasabeselom/aad50/issues/1)
-- SHA-256 audit hash confirmed: `7d395c5eae31eed97a1929bd4ec2d22fc45aeaff256e6b871790f527a9965116`
+- Windows Beta dry-run confirmed working on WD PC SN730 SDBQNTY-256G-1001 (\\.\PhysicalDrive0, Windows 11) — [Issue #1](https://github.com/yonasabeselom/aad50/issues/1)
+- Linux dry-run confirmed working on GitHub Codespaces — [Issue #2](https://github.com/yonasabeselom/aad50/issues/2)
+- Both platforms validated — identical 50-cycle B → C → A sequence confirmed on Linux and Windows
+- Windows SHA-256 audit hash: `7d395c5eae31eed97a1929bd4ec2d22fc45aeaff256e6b871790f527a9965116`
+- Linux SHA-256 audit hash: `f8432896cebfc6aa843d22f155b6d55d224eb43b0ba45506aa7a07758913cb1f`
 
 ### v1.0 — June 2026
 - Initial release — Linux reference implementation (Stable)
