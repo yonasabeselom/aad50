@@ -129,76 +129,90 @@ Both `aad50_gui_windows.py` and `aad50_abeselom_windows.py` must be in the same 
 python aad50_gui_windows.py
 ```
 
-### Linux Requirements
+### Quick Start — Choose Your Platform
 
-- Python 3.10+
-- Linux kernel 5.15+
-- Root / sudo access
-- Target: NVMe controller node (e.g. `/dev/nvme0`, not a namespace node like `/dev/nvme0n1`)
-- Optional: `nvme-cli` for drive model identification
+---
 
-### Windows Requirements
+#### 🖥️ Windows GUI (Recommended for most users)
 
-- Python 3.10+
-- Windows 10 version 1607+ / Windows 11 / Windows Server 2016+
-- Administrator privileges (right-click → Run as administrator)
-- Target: Physical NVMe drive (e.g. `\\.\PhysicalDrive0`)
-- No external Python dependencies — standard library only
+The easiest way to use AAD-50 on Windows. Full graphical interface — no command line needed.
 
-### Installation
-
-```bash
-git clone https://github.com/yonasabeselom/aad50
-cd aad50
+**Step 1 — Install the GUI requirement:**
+```
+pip install customtkinter
 ```
 
-No external Python dependencies on either platform. Both implementations use only the standard library.
+**Step 2 — Place both files in the same folder:**
+- `aad50_gui_windows.py`
+- `aad50_abeselom_windows.py`
 
-### Linux Usage
-
-```bash
-# List available NVMe drives
-sudo python3 aad50_abeselom.py --help
-
-# Standard interactive execution
-sudo python3 aad50_abeselom.py /dev/nvme0
-
-# With full execution log and JSON audit report
-sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log
-
-# Non-interactive mode for automated server deprovisioning pipelines
-sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log --force
-
-# Simulate the full 50-cycle sequence without issuing any IOCTL commands
-sudo python3 aad50_abeselom.py /dev/nvme0 --dry-run --verbose
+**Step 3 — Run as Administrator:**
+```
+python aad50_gui_windows.py
 ```
 
-### Windows Usage
+The GUI will open, detect your NVMe drives automatically, and guide you through the sanitization process step by step.
+
+---
+
+#### ⌨️ Windows Command Line
+
+For advanced users, automation pipelines, or headless server environments.
+
+**Run as Administrator. Open Command Prompt and type:**
 
 ```powershell
-# List all detected NVMe drives
+# Step 1 — See your NVMe drives
 python aad50_abeselom_windows.py --list
 
-# Standard interactive execution
+# Step 2 — Simulate first (safe — no hardware commands sent)
+python aad50_abeselom_windows.py --dry-run --verbose \\.\PhysicalDrive0
+
+# Step 3 — Live execution (PERMANENT — destroys all data)
 python aad50_abeselom_windows.py \\.\PhysicalDrive0
 
-# With full execution log and JSON audit report
+# With audit report saved to file
 python aad50_abeselom_windows.py \\.\PhysicalDrive0 --log C:\logs\aad50.log
 
-# Non-interactive mode for automated deprovisioning pipelines
+# Non-interactive mode for automated pipelines
 python aad50_abeselom_windows.py \\.\PhysicalDrive0 --log C:\logs\aad50.log --force
-
-# Simulate the full 50-cycle sequence without issuing any commands
-python aad50_abeselom_windows.py \\.\PhysicalDrive0 --dry-run --verbose
 ```
+
+---
+
+#### 🐧 Linux Command Line
+
+For Linux systems, servers, and GitHub Codespaces.
+
+**Run as root. Open terminal and type:**
+
+```bash
+# Step 1 — Simulate first (safe — no hardware commands sent)
+sudo python3 aad50_abeselom.py --dry-run --verbose /dev/nvme0
+
+# Step 2 — Live execution (PERMANENT — destroys all data)
+sudo python3 aad50_abeselom.py /dev/nvme0
+
+# With audit report saved to file
+sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log
+
+# Non-interactive mode for automated server deprovisioning
+sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log --force
+```
+
+> **Note:** Target the NVMe controller node (e.g. `/dev/nvme0`), not a namespace node (e.g. `/dev/nvme0n1`).
+
+---
 
 ### Authorization
 
-In interactive mode, both versions require the operator to type the following token exactly before any destructive command is issued:
+In both command line versions, you must type the following token exactly when prompted before any destructive command is issued:
 
 ```
 EXECUTE-AAD-50-ABESELOM
 ```
+
+The GUI handles this via an input field on the Sanitize screen.
 
 ### Key Implementation Features (v1.0)
 
