@@ -28,9 +28,9 @@ Under the following terms:
 Full licence text: https://creativecommons.org/licenses/by/4.0/
 
 ================================================================================
-PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
-(Applies to: aad50_abeselom.py, aad50_abeselom_windows.py, and all
-Python source files in this repository)
+PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE) — PROPRIETARY
+(Applies to: aad50_abeselom.py, aad50_abeselom_windows.py,
+aad50_gui_windows.py, and all Python source files in this repository)
 ================================================================================
 
 PROPRIETARY LICENCE — ALL RIGHTS RESERVED

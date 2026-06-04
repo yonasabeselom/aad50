@@ -4,6 +4,7 @@
 # Firmware-Enforced Flash Sanitization Specification
 # ==============================================================================
 # Author      : Yonas Abeselom (yonas_abeselom@protonmail.com)
+# Repository  : https://github.com/yonasabeselom/aad50
 # Version     : 1.0
 # Date        : June 1, 2026
 # Architecture: Low-Level NVMe Admin Command Interface (IOCTL, Linux)
