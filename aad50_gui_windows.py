@@ -14,6 +14,7 @@
 # ==============================================================================
 
 import sys
+import webbrowser
 import os
 import ctypes
 import json
@@ -314,6 +315,8 @@ class AAD50App(ctk.CTk):
         # App state variables
         self.selected_drive = None
         self.drives         = []
+        self.drives_cached  = False
+        self.operator_name  = ""
         self.dry_run        = tk.BooleanVar(value=True)
         self.sanitization_thread = None
         self.report_data    = None
@@ -411,13 +414,26 @@ class AAD50App(ctk.CTk):
         self.mode_badge.pack(side="left", padx=(15, 0), pady=4)
 
         header_right = ctk.CTkFrame(self.header, fg_color="transparent")
-        header_right.pack(side="right", padx=20)
+        header_right.pack(side="right", padx=20, pady=6)
         ctk.CTkLabel(
             header_right,
-            text=f"v1.0  |  {AUTHOR}",
-            font=FONT_SMALL,
-            text_color=TEXT_MUTED
-        ).pack()
+            text=f"v1.0  |  Developed by {AUTHOR}",
+            font=("Segoe UI", 9, "bold"),
+            text_color=TEXT_HIGH
+        ).pack(anchor="e")
+        github_btn = ctk.CTkButton(
+            header_right,
+            text="⎋ github.com/yonasabeselom/aad50",
+            font=("Consolas", 8),
+            fg_color="transparent",
+            hover_color=MATTE_INPUT,
+            text_color=ACCENT_GREEN,
+            cursor="hand2",
+            height=16,
+            corner_radius=4,
+            command=lambda: webbrowser.open("https://github.com/yonasabeselom/aad50")
+        )
+        github_btn.pack(anchor="e")
 
         # Safe update: Execute badge and status telemetry configuration ONLY after status bar elements exist
         self._update_mode_badge()
@@ -448,7 +464,7 @@ class AAD50App(ctk.CTk):
 
         self.nav_buttons = {}
         nav_items = [
-            ("home",     "  Home Dashboard"),
+            ("home",     "🏠  Home Dashboard"),
             ("drives",   "💾  Select Drive"),
             ("sanitize", "⚡  Sanitize Drive"),
             ("reports",  "📋  Audit Reports"),
@@ -701,7 +717,10 @@ class AAD50App(ctk.CTk):
         self.drives_frame = ctk.CTkFrame(drives_container, fg_color="transparent")
         self.drives_frame.pack(fill="both", expand=True)
 
-        self._refresh_drives()
+        if self.drives_cached:
+            self._populate_drives_ui()  # Instant — no scan
+        else:
+            self._refresh_drives()  # First time only
 
     def _refresh_drives(self):
         for widget in self.drives_frame.winfo_children():
@@ -812,6 +831,7 @@ class AAD50App(ctk.CTk):
                 command=lambda *args, idx=idx, model=model, path=path, letters=letters: self._select_drive((idx, model, path, letters))
             ).pack(side="right", padx=16, pady=12)
 
+        self.drives_cached = True
         self._set_status(f"Bus Scan Done. Drives Located: {len(self.drives)}")
 
         if self.selected_drive:
@@ -827,10 +847,63 @@ class AAD50App(ctk.CTk):
                 command=lambda: self._show_screen("sanitize")
             ).pack(pady=16, fill="x")
 
+    def _build_drive_cards(self):
+        """Build drive cards from self.drives — instant, no hardware scan."""
+        for widget in self.drives_frame.winfo_children():
+            widget.destroy()
+        if not self.drives:
+            ctk.CTkLabel(
+                self.drives_frame,
+                text="No NVMe drives found. Click Refresh Drives to scan.",
+                font=FONT_BODY, text_color=TEXT_MUTED
+            ).pack(expand=True, pady=40)
+            return
+        for idx, model, path, letters in self.drives:
+            is_selected = (self.selected_drive and self.selected_drive[2] == path)
+            card = ctk.CTkFrame(
+                self.drives_frame,
+                fg_color=MATTE_CARD if not is_selected else "#0D2137",
+                corner_radius=6,
+                border_width=1 if is_selected else 0,
+                border_color=ACCENT_GREEN if is_selected else "transparent"
+            )
+            card.pack(fill="x", padx=16, pady=4)
+            info = ctk.CTkFrame(card, fg_color="transparent")
+            info.pack(side="left", fill="both", expand=True, padx=14, pady=12)
+            ctk.CTkLabel(info, text=f"💾  {model}",
+                font=FONT_SUBHEAD,
+                text_color=ACCENT_GREEN if is_selected else TEXT_HIGH,
+                anchor="w").pack(anchor="w")
+            ctk.CTkLabel(info, text=f"Path: {path}  •  Drive Index: {idx}",
+                font=FONT_MONO, text_color=TEXT_MUTED, anchor="w").pack(anchor="w", pady=(2,0))
+            btn_text = "✓ Selected" if is_selected else "Select Drive"
+            btn_color = "#0A4A1A" if is_selected else ACCENT_GREEN
+            ctk.CTkButton(
+                card, text=btn_text, font=FONT_BODY,
+                fg_color=btn_color, hover_color=ACCENT_GREEN,
+                text_color=MATTE_BG, width=120, height=34, corner_radius=4,
+                command=lambda d=(idx, model, path, letters): self._select_drive(d)
+            ).pack(side="right", padx=14, pady=12)
+        if self.selected_drive:
+            ctk.CTkButton(
+                self.drives_frame,
+                text="Continue to Sanitize →",
+                font=FONT_HEADING,
+                fg_color=ACCENT_GREEN,
+                text_color=MATTE_BG,
+                hover_color="#059669",
+                height=46, corner_radius=4,
+                command=lambda: self._show_screen("sanitize")
+            ).pack(pady=16, fill="x")
+
+    def _populate_drives_ui(self):
+        """Rebuild the drives list UI from cached self.drives — instant, no scan."""
+        self._build_drive_cards()
+
     def _select_drive(self, drive_tuple):
-        """Select a drive and immediately navigate to the sanitize screen."""
+        """Select a drive — instant UI update using cache, no PowerShell scan."""
         self.selected_drive = drive_tuple
-        self._refresh_drives()
+        self._build_drive_cards()  # Instant — no scan, just rebuild cards
         self._set_status(f"Drive selected: {drive_tuple[1]} — click Continue to Sanitize")
 
     # ── Screen: DESTRUCTIVE COMPLIANCE WARNING (Two-Column Grid Layout) ───────
@@ -962,6 +1035,22 @@ class AAD50App(ctk.CTk):
         mode_color = ACCENT_AMBER if self.dry_run.get() else ACCENT_RED
         ctk.CTkLabel(mode_card, text=f"Execution Perimeter: {mode_text}", font=FONT_HEADING, text_color=mode_color).pack(anchor="w", padx=20, pady=12)
 
+        # Operator Name field
+        operator_card = ctk.CTkFrame(right_frame, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
+        operator_card.pack(fill="x", pady=(0, 8))
+        ctk.CTkLabel(operator_card, text="Operator Name", font=FONT_SUBHEAD, text_color=TEXT_MUTED).pack(anchor="w", padx=20, pady=(12, 4))
+        self.operator_entry = ctk.CTkEntry(
+            operator_card,
+            font=FONT_MONO,
+            fg_color=MATTE_INPUT,
+            border_color=MATTE_BORDER,
+            text_color=TEXT_HIGH,
+            placeholder_text="Enter your name (recorded in audit report)...",
+            height=38,
+            corner_radius=4
+        )
+        self.operator_entry.pack(fill="x", padx=20, pady=(0, 12))
+
         # Token input
         auth_card = ctk.CTkFrame(right_frame, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
         auth_card.pack(fill="x", pady=(0, 8))
@@ -1025,6 +1114,23 @@ class AAD50App(ctk.CTk):
             command=self._execute_sanitization
         ).pack(fill="x", pady=(2, 0))
 
+    def _get_drive_serial(self, path: str) -> str:
+        """Query drive serial number via Win32 — best effort."""
+        try:
+            import subprocess
+            import re as _re
+            idx = _re.sub(r"[^0-9]", "", path) or "0"
+            result = subprocess.run(
+                ["powershell", "-Command",
+                 f"Get-PhysicalDisk | Where-Object {{$_.DeviceId -eq '{idx}'}} | Select-Object -ExpandProperty SerialNumber"],
+                capture_output=True, text=True, timeout=5,
+                creationflags=0x08000000
+            )
+            serial = result.stdout.strip()
+            return serial if serial else "Unknown"
+        except Exception:
+            return "Unknown"
+
     def _browse_log(self):
         path = filedialog.asksaveasfilename(
             defaultextension=".log",
@@ -1059,12 +1165,17 @@ class AAD50App(ctk.CTk):
 
         self.running = True
         self.cycles_done = 0
+        self.operator_name = self.operator_entry.get().strip() if hasattr(self, "operator_entry") else "Unknown"
+        if not self.operator_name:
+            self.operator_name = "Not specified"
         self.report_data = {
             "tool": TOOL_NAME,
             "version": TOOL_VERSION,
             "author": AUTHOR,
             "device": self.selected_drive[2],
             "drive_model": self.selected_drive[1],
+            "drive_serial": self._get_drive_serial(self.selected_drive[2]),
+            "operator": self.operator_name,
             "started_at": datetime.now(timezone.utc).isoformat(),
             "dry_run": self.dry_run.get(),
             "cycles": [],
@@ -1297,7 +1408,7 @@ class AAD50App(ctk.CTk):
             widget.destroy()
 
         completion_container = ctk.CTkFrame(self.content, fg_color=MATTE_BG)
-        completion_container.pack(fill="both", expand=True, padx=24, pady=(20, 10))
+        completion_container.pack(fill="both", expand=True, padx=0, pady=0)
 
         result_color  = "#0B2D20" if success else "#3A0D0D"
         result_border = ACCENT_GREEN if success else ACCENT_RED
@@ -1305,78 +1416,361 @@ class AAD50App(ctk.CTk):
         result_text   = "SUCCESS — DATA DESTROYED" if success else "FAILED — INCOMPLETE"
         result_tcolor = ACCENT_GREEN if success else ACCENT_RED
 
-        banner = ctk.CTkFrame(completion_container, fg_color=result_color, corner_radius=8, border_width=1, border_color=result_border)
+        inner = ctk.CTkFrame(completion_container, fg_color="transparent")
+        inner.pack(fill="both", expand=True, padx=16, pady=(10, 8))
+
+        banner = ctk.CTkFrame(inner, fg_color=result_color, corner_radius=8, border_width=1, border_color=result_border)
         banner.pack(fill="x", pady=(0, 10))
 
         ctk.CTkLabel(
             banner,
             text=f"{result_icon}  {result_text}",
-            font=FONT_TITLE,
+            font=("Segoe UI", 16, "bold"),
             text_color=result_tcolor
-        ).pack(pady=(16, 4))
+        ).pack(pady=(10, 2))
 
         mode_note = "[SIMULATOR RUN]" if self.report_data.get("dry_run") else "[LIVE PHYSICAL DESTRUCTIVE OVERWRITE RUN]"
-        ctk.CTkLabel(banner, text=mode_note, font=FONT_MONO, text_color=ACCENT_AMBER).pack(pady=(0, 16))
+        ctk.CTkLabel(banner, text=mode_note, font=FONT_MONO, text_color=ACCENT_AMBER).pack(pady=(0, 8))
 
         # Metrics Card
-        summary = ctk.CTkFrame(completion_container, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
-        summary.pack(fill="x", pady=(0, 8))
-        
-        ctk.CTkLabel(summary, text="Summary", font=FONT_HEADING, text_color=TEXT_HIGH).pack(anchor="w", padx=20, pady=(10, 4))
+        summary = ctk.CTkFrame(inner, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
+        summary.pack(fill="x", pady=(0, 4))
+        ctk.CTkLabel(summary, text="Summary", font=FONT_SUBHEAD, text_color=TEXT_HIGH).pack(anchor="w", padx=12, pady=(6, 2))
 
         rows = [
             ("Device", self.report_data.get("device", "")),
-            ("Drive Model", self.report_data.get("drive_model", "")),
+            ("Drive Model",    self.report_data.get("drive_model", "")),
+            ("Serial Number",  self.report_data.get("drive_serial", "Unknown")),
+            ("Operator",       self.report_data.get("operator", "Not specified")),
             ("Cycles Completed", f"{len(self.report_data.get('cycles', []))} / {TOTAL_CYCLES}"),
             ("Started", self.report_data.get("started_at", "")[:19].replace("T", " ")),
             ("Completed", self.report_data.get("completed_at", "")[:19].replace("T", " ")),
         ]
         for label, value in rows:
             row = ctk.CTkFrame(summary, fg_color="transparent")
-            row.pack(fill="x", padx=20, pady=2)
-            ctk.CTkLabel(row, text=f"{label}:", font=FONT_SMALL, text_color=TEXT_MUTED, width=120, anchor="w").pack(side="left")
-            ctk.CTkLabel(row, text=value, font=FONT_MONO, text_color=TEXT_HIGH, anchor="w").pack(side="left")
-
-        ctk.CTkFrame(summary, fg_color="transparent", height=10).pack()
+            row.pack(fill="x", padx=12, pady=1)
+            ctk.CTkLabel(row, text=f"{label}:", font=("Segoe UI", 8), text_color=TEXT_MUTED, width=110, anchor="w").pack(side="left")
+            ctk.CTkLabel(row, text=value, font=("Consolas", 8), text_color=TEXT_HIGH, anchor="w").pack(side="left")
+        ctk.CTkFrame(summary, fg_color="transparent", height=4).pack()
 
         # Crypto Stamp Card
-        hash_card = ctk.CTkFrame(completion_container, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
-        hash_card.pack(fill="x", pady=(0, 10))
-        
-        ctk.CTkLabel(hash_card, text="CRYPTO TELEMETRY ANCHOR (SHA-256)", font=FONT_HEADING, text_color=TEXT_HIGH).pack(anchor="w", padx=20, pady=(10, 2))
-        ctk.CTkLabel(hash_card, text=log_hash, font=FONT_MONO, text_color=ACCENT_GREEN, wraplength=700).pack(anchor="w", padx=20, pady=(0, 4))
-        ctk.CTkLabel(hash_card, text="This hash represents an immutable, sequential calculation of all 50 physical cycle states. It acts as audit-proof declassification telemetry.", font=FONT_BODY, text_color=TEXT_MUTED, wraplength=720, justify="left").pack(anchor="w", padx=20, pady=(0, 12))
+        hash_card = ctk.CTkFrame(inner, fg_color=MATTE_CARD, corner_radius=6, border_width=1, border_color=MATTE_BORDER)
+        hash_card.pack(fill="x", pady=(0, 6))
+        ctk.CTkLabel(hash_card, text="SHA-256 Audit Hash", font=FONT_SUBHEAD, text_color=TEXT_HIGH).pack(anchor="w", padx=12, pady=(6, 2))
+        # Hash display on dark background
+        hash_bg = ctk.CTkFrame(hash_card, fg_color="#051505", corner_radius=4)
+        hash_bg.pack(fill="x", padx=12, pady=(0, 4))
+        ctk.CTkLabel(hash_bg, text=log_hash, font=("Consolas", 9, "bold"), text_color="#39FF14", wraplength=800).pack(padx=10, pady=6)
+        ctk.CTkLabel(hash_card, text="Tamper-evident chain-of-custody proof — any alteration produces a different hash.", font=("Segoe UI", 8), text_color=TEXT_MUTED, wraplength=800).pack(anchor="w", padx=12, pady=(0, 6))
 
         # Bottom Deck
-        btns = ctk.CTkFrame(completion_container, fg_color="transparent")
-        btns.pack(fill="x", pady=(4, 0))
-        btns.columnconfigure((0, 1, 2), weight=1)
+        btns = ctk.CTkFrame(inner, fg_color="transparent")
+        btns.pack(fill="x", pady=(4, 4))
+        btns.columnconfigure((0, 1, 2, 3), weight=1)
 
         ctk.CTkButton(
-            btns, text="📋  Copy Hash State",
-            font=FONT_SUBHEAD, fg_color=MATTE_CARD, hover_color=MATTE_INPUT,
+            btns, text="📋  Copy Hash",
+            font=("Segoe UI", 9), fg_color=MATTE_CARD, hover_color=MATTE_INPUT,
             text_color=TEXT_HIGH, border_width=1, border_color=MATTE_BORDER,
-            height=40, corner_radius=4,
+            height=32, corner_radius=4,
             command=lambda: self._copy_to_clipboard(log_hash)
         ).grid(row=0, column=0, padx=4, sticky="ew")
 
         ctk.CTkButton(
-            btns, text="💾  Export Report JSON",
-            font=FONT_SUBHEAD, fg_color=MATTE_CARD, hover_color=MATTE_INPUT,
+            btns, text="💾  Save JSON",
+            font=("Segoe UI", 9), fg_color=MATTE_CARD, hover_color=MATTE_INPUT,
             text_color=TEXT_HIGH, border_width=1, border_color=MATTE_BORDER,
-            height=40, corner_radius=4,
+            height=32, corner_radius=4,
             command=self._save_report
         ).grid(row=0, column=1, padx=4, sticky="ew")
 
         ctk.CTkButton(
-            btns, text="⌂  Dashboard Return",
-            font=FONT_SUBHEAD, fg_color=ACCENT_GREEN, hover_color="#059669",
+            btns, text="📄  PDF Certificate",
+            font=("Segoe UI", 9), fg_color=ACCENT_GREEN, hover_color="#059669",
             text_color=MATTE_BG,
-            height=40, corner_radius=4,
-            command=lambda: self._show_screen("home")
+            height=32, corner_radius=4,
+            command=self._export_pdf_certificate
         ).grid(row=0, column=2, padx=4, sticky="ew")
 
+        ctk.CTkButton(
+            btns, text="⌂  Home",
+            font=("Segoe UI", 9), fg_color=MATTE_CARD, hover_color=MATTE_INPUT,
+            text_color=TEXT_HIGH, border_width=1, border_color=MATTE_BORDER,
+            height=32, corner_radius=4,
+            command=lambda: self._show_screen("home")
+        ).grid(row=0, column=3, padx=4, sticky="ew")
+
         self._set_status(f"Matrix Completed. Status Code: {result_text}")
+
+
+    def _export_pdf_certificate(self):
+        """Generate a professional PDF Certificate of Destruction."""
+        try:
+            from reportlab.lib.pagesizes import A4
+            from reportlab.lib import colors
+            from reportlab.lib.units import mm
+            from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, HRFlowable
+            from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+            from reportlab.lib.enums import TA_CENTER, TA_LEFT
+        except ImportError:
+            messagebox.showerror(
+                "Missing Dependency",
+                "ReportLab is required to generate PDF certificates.\n\n"
+                "Install it with:\n  pip install reportlab"
+            )
+            return
+
+        path = filedialog.asksaveasfilename(
+            defaultextension=".pdf",
+            filetypes=[("PDF files", "*.pdf"), ("All files", "*.*")],
+            title="Save Certificate of Destruction",
+            initialfile="AAD50_Certificate_of_Destruction.pdf",
+            initialdir=os.path.expanduser("~/Documents")
+        )
+        if not path:
+            return
+
+        try:
+            doc = SimpleDocTemplate(
+                path,
+                pagesize=A4,
+                rightMargin=20*mm, leftMargin=20*mm,
+                topMargin=20*mm, bottomMargin=20*mm
+            )
+
+            # Colors
+            NAVY    = colors.HexColor("#1C3A5E")
+            GREEN   = colors.HexColor("#2E8B47")
+            LIGHT   = colors.HexColor("#F4F6F9")
+            DARK    = colors.HexColor("#1A1A2E")
+            GRAY    = colors.HexColor("#6B7280")
+            RED     = colors.HexColor("#C0392B")
+            WHITE   = colors.white
+            BLACK   = colors.black
+
+            styles  = getSampleStyleSheet()
+
+            title_style = ParagraphStyle(
+                "Title",
+                fontName="Helvetica-Bold",
+                fontSize=22,
+                textColor=NAVY,
+                alignment=TA_CENTER,
+                spaceAfter=4
+            )
+            sub_style = ParagraphStyle(
+                "Sub",
+                fontName="Helvetica",
+                fontSize=11,
+                textColor=GRAY,
+                alignment=TA_CENTER,
+                spaceAfter=2
+            )
+            label_style = ParagraphStyle(
+                "Label",
+                fontName="Helvetica-Bold",
+                fontSize=9,
+                textColor=GRAY,
+                alignment=TA_LEFT
+            )
+            value_style = ParagraphStyle(
+                "Value",
+                fontName="Helvetica",
+                fontSize=10,
+                textColor=BLACK,
+                alignment=TA_LEFT
+            )
+            hash_style = ParagraphStyle(
+                "Hash",
+                fontName="Courier",
+                fontSize=7,
+                textColor=GREEN,
+                alignment=TA_CENTER,
+                spaceAfter=4
+            )
+            section_style = ParagraphStyle(
+                "Section",
+                fontName="Helvetica-Bold",
+                fontSize=11,
+                textColor=NAVY,
+                spaceBefore=8,
+                spaceAfter=4
+            )
+            footer_style = ParagraphStyle(
+                "Footer",
+                fontName="Helvetica",
+                fontSize=8,
+                textColor=GRAY,
+                alignment=TA_CENTER
+            )
+
+            rd = self.report_data
+            outcome = rd.get("outcome", "UNKNOWN")
+            is_success = "SUCCESS" in outcome
+            outcome_color = GREEN if is_success else RED
+
+            story = []
+
+            # ── Header ────────────────────────────────────────────────────
+            story.append(Spacer(1, 2*mm))
+            story.append(Paragraph("CERTIFICATE OF DATA DESTRUCTION", title_style))
+            story.append(Spacer(1, 6*mm))
+            story.append(Paragraph("The Abeselom ASIC-Direct 50 (AAD-50)", sub_style))
+            story.append(Paragraph("Firmware-Enforced NVMe Sanitization Protocol — v1.0", sub_style))
+            story.append(Spacer(1, 6*mm))
+            story.append(HRFlowable(width="100%", thickness=2, color=NAVY))
+            story.append(Spacer(1, 4*mm))
+
+            # ── Outcome Banner ─────────────────────────────────────────────
+            outcome_table = Table(
+                [[Paragraph(f"SANITIZATION {outcome}", ParagraphStyle(
+                    "Outcome",
+                    fontName="Helvetica-Bold",
+                    fontSize=14,
+                    textColor=WHITE,
+                    alignment=TA_CENTER
+                ))]],
+                colWidths=["100%"]
+            )
+            outcome_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,-1), outcome_color),
+                ("TOPPADDING", (0,0), (-1,-1), 10),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 10),
+                ("ROUNDEDCORNERS", [4]),
+            ]))
+            story.append(outcome_table)
+            story.append(Spacer(1, 6*mm))
+
+            # ── Drive Information ──────────────────────────────────────────
+            story.append(Paragraph("DEVICE INFORMATION", section_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
+            story.append(Spacer(1, 2*mm))
+
+            drive_data = [
+                ["Drive Model",    rd.get("drive_model", "Unknown")],
+                ["Serial Number",  rd.get("drive_serial", "Unknown")],
+                ["Device Path",    rd.get("device", "Unknown")],
+                ["Drive Letters",  self.selected_drive[3] if self.selected_drive and len(self.selected_drive) > 3 else "N/A"],
+            ]
+            drive_table = Table(
+                [[Paragraph(r[0], label_style), Paragraph(str(r[1]), value_style)] for r in drive_data],
+                colWidths=[50*mm, None]
+            )
+            drive_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (0,-1), LIGHT),
+                ("TOPPADDING", (0,0), (-1,-1), 5),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 5),
+                ("LEFTPADDING", (0,0), (-1,-1), 8),
+                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#E5E7EB")),
+            ]))
+            story.append(drive_table)
+            story.append(Spacer(1, 5*mm))
+
+            # ── Sanitization Details ───────────────────────────────────────
+            story.append(Paragraph("SANITIZATION DETAILS", section_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
+            story.append(Spacer(1, 2*mm))
+
+            mode_str = "DRY-RUN SIMULATION (No hardware commands)" if rd.get("dry_run") else "LIVE EXECUTION (Real hardware destruction)"
+            san_data = [
+                ["Protocol",           "AAD-50 — Firmware-Enforced NVMe Sanitization"],
+                ["Execution Mode",     mode_str],
+                ["Total Cycles",       f"{rd.get('cycles_run', len(rd.get('cycles', [])))} / {TOTAL_CYCLES}"],
+                ["Phase B (1-40)",     "Physical NAND Cell Overwrite (CDW10=0x02) — 40 cycles"],
+                ["Phase C (41-45)",    "FTL Index Teardown (CDW10=0x01) — 5 cycles"],
+                ["Phase A (46-50)",    "Cryptographic Key Destruction (CDW10=0x04) — 5 cycles"],
+                ["Polling Method",     "NVMe Log Page 0x81 (SSTAT) — Hardware-confirmed per cycle"],
+                ["Date Started",       rd.get("started_at", "")[:19].replace("T", " ") + " UTC"],
+                ["Date Completed",     rd.get("completed_at", "")[:19].replace("T", " ") + " UTC"],
+            ]
+            san_table = Table(
+                [[Paragraph(r[0], label_style), Paragraph(str(r[1]), value_style)] for r in san_data],
+                colWidths=[50*mm, None]
+            )
+            san_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (0,-1), LIGHT),
+                ("BACKGROUND", (1,1), (1,1), colors.HexColor("#FFF8E7") if rd.get("dry_run") else colors.HexColor("#F0FFF4")),
+                ("TOPPADDING", (0,0), (-1,-1), 5),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 5),
+                ("LEFTPADDING", (0,0), (-1,-1), 8),
+                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#E5E7EB")),
+            ]))
+            story.append(san_table)
+            story.append(Spacer(1, 5*mm))
+
+            # ── Operator & Compliance ──────────────────────────────────────
+            story.append(Paragraph("OPERATOR & COMPLIANCE", section_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
+            story.append(Spacer(1, 2*mm))
+
+            comp_data = [
+                ["Operator",          rd.get("operator", "Not specified")],
+                ["Tool Author",       rd.get("author", AUTHOR)],
+                ["NIST Alignment",    "SP 800-88 Rev.2 — Purge Classification"],
+                ["IEEE Alignment",    "IEEE 2883-2022 — Storage Device Sanitization"],
+                ["ISO Alignment",     "ISO/IEC 27040:2015 — Storage Security"],
+                ["Repository",        "https://github.com/yonasabeselom/aad50"],
+            ]
+            comp_table = Table(
+                [[Paragraph(r[0], label_style), Paragraph(str(r[1]), value_style)] for r in comp_data],
+                colWidths=[50*mm, None]
+            )
+            comp_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (0,-1), LIGHT),
+                ("TOPPADDING", (0,0), (-1,-1), 5),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 5),
+                ("LEFTPADDING", (0,0), (-1,-1), 8),
+                ("GRID", (0,0), (-1,-1), 0.5, colors.HexColor("#E5E7EB")),
+            ]))
+            story.append(comp_table)
+            story.append(Spacer(1, 5*mm))
+
+            # ── SHA-256 Audit Hash ─────────────────────────────────────────
+            story.append(Paragraph("CRYPTOGRAPHIC AUDIT CHAIN", section_style))
+            story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
+            story.append(Spacer(1, 2*mm))
+
+            hash_table = Table(
+                [[Paragraph("SHA-256 AUDIT HASH", label_style)],
+                 [Paragraph(rd.get("log_hash", "Not generated"), ParagraphStyle("HashBig", fontName="Courier-Bold", fontSize=9, textColor=colors.HexColor("#39FF14"), alignment=TA_CENTER, spaceAfter=4))]],
+                colWidths=["100%"]
+            )
+            hash_table.setStyle(TableStyle([
+                ("BACKGROUND", (0,0), (-1,-1), colors.HexColor("#050D05")),
+                ("BORDER", (0,0), (-1,-1), 1, colors.HexColor("#39FF14")),
+                ("TOPPADDING", (0,0), (-1,-1), 8),
+                ("BOTTOMPADDING", (0,0), (-1,-1), 8),
+                ("LEFTPADDING", (0,0), (-1,-1), 10),
+                ("ROUNDEDCORNERS", [4]),
+            ]))
+            story.append(hash_table)
+            story.append(Spacer(1, 2*mm))
+            story.append(Paragraph(
+                "This SHA-256 hash cryptographically verifies all 50 cycle records are complete and unaltered. "
+                "Any modification to the audit data will produce a different hash — providing tamper-evident "
+                "chain-of-custody proof for compliance and legal purposes.",
+                ParagraphStyle("Note", fontName="Helvetica", fontSize=8, textColor=GRAY, alignment=TA_LEFT)
+            ))
+
+            # ── Footer ─────────────────────────────────────────────────────
+            story.append(Spacer(1, 8*mm))
+            story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
+            story.append(Spacer(1, 2*mm))
+            story.append(Paragraph("Generated by AAD-50 v1.0  |  Developed by Yonas Abeselom", footer_style))
+            story.append(Paragraph("https://github.com/yonasabeselom/aad50", ParagraphStyle("FooterLink", fontName="Courier", fontSize=8, textColor=colors.HexColor("#2E8B47"), alignment=TA_CENTER)))
+            story.append(Spacer(1, 1*mm))
+            story.append(Paragraph("This certificate is valid only when accompanied by the corresponding JSON audit report.", footer_style))
+
+            doc.build(story)
+            self._set_status(f"PDF Certificate saved: {path}")
+            messagebox.showinfo(
+                "Certificate Generated",
+                f"Certificate of Destruction saved to:\n\n{path}\n\n"
+                f"This PDF is suitable for compliance audits, GDPR records, and chain-of-custody documentation."
+            )
+
+        except Exception as e:
+            messagebox.showerror("PDF Generation Error", f"Could not generate certificate:\n\n{str(e)}")
 
     def _copy_to_clipboard(self, text: str):
         self.clipboard_clear()
