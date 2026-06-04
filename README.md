@@ -220,9 +220,13 @@ The GUI handles this via an input field on the Sanitize screen.
 - Correct **B → C → A** phase ordering for maximum fault resilience
 - Post-sanitization **LBA sample verification** read
 - **SHA-256 tamper-evident audit report** for chain-of-custody compliance
+- **PDF Certificate of Destruction** — operator name, drive serial number, compliance standards, SHA-256 hash
+- **Drive serial number** captured and recorded in every audit report
+- **Operator name** field — recorded for chain-of-custody and GDPR compliance
 - Non-interactive `--force` flag for automated deprovisioning pipelines
 - `--dry-run` simulation mode for pre-deployment validation
 - Windows `--list` flag to enumerate all detected NVMe drives
+- Windows GUI OEM driver diagnostic — tests Log Page 0x81 pass-through capability
 
 ---
 
@@ -285,7 +289,7 @@ AAD-50 uses a dual licence — see the [LICENSE](./LICENSE) file for full terms.
 
 **Specification and Whitepaper** — Licensed under [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). You may share, reference, and build upon the specification freely, provided you credit Yonas Abeselom as the original author and link to this repository.
 
-**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`) — Proprietary. You may read and run the code for personal, non-commercial use. Redistribution, modification, or commercial use requires written permission from the author.
+**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`) — Proprietary. You may read and run the code for personal, non-commercial use. Redistribution, modification, or commercial use requires written permission from the author.
 
 For licensing enquiries: **yonas_abeselom@protonmail.com**
 
@@ -304,6 +308,16 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 ---
 
 ## Changelog
+
+### v1.0.2 — June 4, 2026
+- PDF Certificate of Destruction added — operator name, drive serial number, NIST/IEEE/ISO compliance, SHA-256 hash, professional A4 layout
+- Operator Name field added to Sanitize screen — recorded in JSON report and PDF certificate
+- Drive serial number auto-captured via Win32 — recorded in all audit outputs
+- GUI completion screen compacted — all information and buttons visible without scrolling
+- GitHub link in header made clickable — opens repository in browser
+- Drive selection screen caching — instant response after first scan, no repeated PowerShell calls
+- Home Dashboard navigation icon added
+- SHA-256 hash display improved — bright green on dark background, bold monospace font
 
 ### v1.0.1 — June 3, 2026
 - Windows Beta dry-run confirmed working on WD PC SN730 SDBQNTY-256G-1001 (\\.\PhysicalDrive0, Windows 11) — [Issue #1](https://github.com/yonasabeselom/aad50/issues/1)
@@ -330,5 +344,5 @@ If you reference AAD-50 in your own research or documentation, please cite as:
 ```
 Y. Abeselom, "The Abeselom ASIC-Direct 50 (AAD-50): A Firmware-Enforced,
 50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
-Version 1.0, June 2026. [Online]. Available: https://github.com/yonasabeselom
+Version 1.0, June 2026. [Online]. Available: https://github.com/yonasabeselom/aad50
 ```
