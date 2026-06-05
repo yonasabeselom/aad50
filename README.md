@@ -120,6 +120,7 @@ The Windows GUI application (`aad50_gui_windows.py`) provides a full graphical i
 **GUI Requirements:**
 ```
 pip install customtkinter
+pip install reportlab
 ```
 
 Both `aad50_gui_windows.py` and `aad50_abeselom_windows.py` must be in the same folder.
@@ -128,6 +129,18 @@ Both `aad50_gui_windows.py` and `aad50_abeselom_windows.py` must be in the same 
 ```
 python aad50_gui_windows.py
 ```
+
+### Standalone Windows Executable
+
+A standalone `AAD50.exe` can be built using PyInstaller — no Python installation required on the target machine. The EXE runs on any Windows 10 1607+ or Windows 11 system.
+
+**Build the EXE:**
+```
+pip install pyinstaller
+pyinstaller --onefile --windowed --name "AAD50" --icon="AAD50_Icon.ico" aad50_gui_windows.py aad50_abeselom_windows.py
+```
+
+The compiled executable will be in the `dist\` folder. Copy `AAD50.exe` anywhere — USB drive, shared folder, or another machine — and it runs standalone as Administrator.
 
 ### Quick Start — Choose Your Platform
 
@@ -318,6 +331,8 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 - Drive selection screen caching — instant response after first scan, no repeated PowerShell calls
 - Home Dashboard navigation icon added
 - SHA-256 hash display improved — bright green on dark background, bold monospace font
+- Standalone Windows EXE build confirmed — runs on any Windows 10/11 machine without Python
+- ReportLab dependency added for PDF certificate generation
 
 ### v1.0.1 — June 3, 2026
 - Windows Beta dry-run confirmed working on WD PC SN730 SDBQNTY-256G-1001 (\\.\PhysicalDrive0, Windows 11) — [Issue #1](https://github.com/yonasabeselom/aad50/issues/1)
