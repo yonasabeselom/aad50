@@ -112,10 +112,10 @@ The Windows GUI application (`aad50_gui_windows.py`) provides a full graphical i
 - **About** — tool information, compliance standards, OEM driver diagnostic
 
 **Simulation Mode — Sanitize Screen (Dry-Run ON):**
-![AAD-50 Sanitize Simulation Mode](AAD50_Sanitize_Simulation.png.png)
+[![AAD-50 Sanitize Simulation Mode](AAD50_Sanitize_Simulation.png)](https://github.com/yonasabeselom/aad50/blob/main/AAD50_Sanitize_Simulation.png)
 
 **Live Mode — Sanitize Screen (Dry-Run OFF):**
-![AAD-50 Sanitize Live Mode](AAD50_Sanitize_Live.png.png)
+[![AAD-50 Sanitize Live Mode](AAD50_Sanitize_Live.png)](https://github.com/yonasabeselom/aad50/blob/main/AAD50_Sanitize_Live.png)
 
 **Simulation Mode — Home Dashboard:**
 ![AAD-50 GUI Simulation Mode](AAD50_GUI_Simulation.png)
