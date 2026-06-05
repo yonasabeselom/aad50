@@ -4,6 +4,7 @@
 # Firmware-Enforced Flash Sanitization Specification
 # ==============================================================================
 # Author      : Yonas Abeselom (yonas_abeselom@protonmail.com)
+# Repository  : https://github.com/yonasabeselom/aad50
 # Version     : 1.0 (Windows Port — Beta)
 # Date        : June 2026
 # Architecture: Win32 DeviceIoControl / IOCTL_STORAGE_PROTOCOL_COMMAND
