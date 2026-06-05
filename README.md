@@ -111,10 +111,16 @@ The Windows GUI application (`aad50_gui_windows.py`) provides a full graphical i
 - **Audit Reports** — load and verify any saved JSON audit report via SHA-256 hash recalculation
 - **About** — tool information, compliance standards, OEM driver diagnostic
 
-**Simulation Mode — Safe (Dry-Run ON):**
+**Simulation Mode — Sanitize Screen (Dry-Run ON):**
+![AAD-50 Sanitize Simulation Mode](AAD50_Sanitize_Simulation.png)
+
+**Live Mode — Sanitize Screen (Dry-Run OFF):**
+![AAD-50 Sanitize Live Mode](AAD50_Sanitize_Live.png)
+
+**Simulation Mode — Home Dashboard:**
 ![AAD-50 GUI Simulation Mode](AAD50_GUI_Simulation.png)
 
-**Live Mode — Armed (Dry-Run OFF):**
+**Live Mode — Home Dashboard:**
 ![AAD-50 GUI Live Mode](AAD50_GUI_Live.png)
 
 **GUI Requirements:**
