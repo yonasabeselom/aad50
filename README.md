@@ -101,9 +101,11 @@ AAD-50 is available as a reference implementation on both **Linux** and **Window
 
 | File | Platform | Interface | Status |
 |---|---|---|---|
-| `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL (`0xC0484E41`) | Stable |
+| `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL — 3-tier USB/NVMe auto-detect | Stable v1.1 |
 | `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` — 3-tier USB/NVMe auto-detect | Beta v1.1 |
 | `aad50_gui_windows.py` | Windows 10 1607+ / 11 | GUI — requires `aad50_abeselom_windows.py` | Beta |
+
+> **Linux v1.1 — USB Enclosure Support:** The Linux implementation now includes three-tier passthrough auto-detection. Point AAD-50 at `/dev/sdb` (USB block device) or `/dev/sg1` (SCSI generic) and it automatically probes Tier 1 (NVMe direct), Tier 2 (ATA SANITIZE via SG_IO/SAT), and Tier 3 (BLKDISCARD). The active pathway is recorded in the audit report.
 
 > **Windows v1.1 — USB Enclosure Support:** The Windows port now includes three-tier passthrough auto-detection for NVMe drives connected via USB enclosures (UASP). The tool probes Tier 1 (NVMe direct), Tier 2 (ATA SCSI/SAT), and Tier 3 (Storage reinitialize) automatically and executes all 50 cycles through whichever pathway the enclosure supports. The active pathway is recorded in the audit report. Hardware testing across enclosure bridge chips is ongoing — if you test via USB, please open a GitHub Issue with your enclosure model and bridge chip.
 
@@ -227,6 +229,21 @@ sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log --force
 
 > **Note:** Target the NVMe controller node (e.g. `/dev/nvme0`), not a namespace node (e.g. `/dev/nvme0n1`).
 
+**USB enclosure — AAD-50 auto-detects the correct pathway:**
+
+```bash
+# USB enclosure via SCSI block device (auto-detects Tier 2 or Tier 3)
+sudo python3 aad50_abeselom.py /dev/sdb
+
+# USB enclosure via SCSI generic node directly (Tier 2)
+sudo python3 aad50_abeselom.py /dev/sg1
+
+# With audit report
+sudo python3 aad50_abeselom.py /dev/sdb --log /var/log/aad50.log
+```
+
+> **USB Note:** AAD-50 automatically finds the `/dev/sgX` node from `/dev/sdX` and probes for ATA SCSI passthrough (Tier 2). If unavailable, falls back to BLKDISCARD (Tier 3). The active pathway is recorded in the audit report.
+
 ---
 
 ### Authorization
@@ -243,7 +260,7 @@ The GUI handles this via an input field on the Sanitize screen.
 
 - Mandatory **Log Page 0x81 polling** after every cycle — hardware-confirmed completion, not nominal
 - Correct **B → C → A** phase ordering for maximum fault resilience
-- **Three-tier USB/NVMe passthrough auto-detection** — Tier 1 NVMe direct, Tier 2 ATA SCSI/SAT, Tier 3 Storage reinitialize
+- **Three-tier USB/NVMe passthrough auto-detection** — Tier 1 NVMe direct, Tier 2 ATA SCSI/SAT, Tier 3 blkdiscard (Linux) / Storage reinitialize (Windows)
 - **USB enclosure support** — NVMe drives in USB 3.x enclosures (UASP) fully supported
 - **Pathway recorded in audit report** — every cycle log includes which passthrough tier was used
 - Post-sanitization **LBA sample verification** read
@@ -337,7 +354,7 @@ For licensing enquiries: **yonas_abeselom@protonmail.com**
 
 Contributions and hardware testing reports are welcome. The highest priority areas are:
 
-- **USB enclosure testing (v1.1)** — if you run `aad50_abeselom_windows.py` on an NVMe drive inside a USB enclosure, please open a GitHub Issue with your enclosure model, bridge chip (ASMedia/Realtek/JMicron), which Tier was detected, and whether all 50 cycles completed. This directly contributes to validating USB passthrough support.
+- **USB enclosure testing (v1.1)** — if you run AAD-50 on an NVMe drive inside a USB enclosure on either Linux or Windows, please open a GitHub Issue with your enclosure model, bridge chip (ASMedia/Realtek/JMicron), OS, which Tier was detected, and whether all 50 cycles completed. This directly contributes to validating USB passthrough support across bridge chips.
 - **Windows Beta hardware testing** — if you run `aad50_abeselom_windows.py` on a real NVMe drive, please open a GitHub Issue with your drive model, Windows version, and whether the sequence completed successfully. Every test result directly contributes to validating the specification across manufacturers.
 - **Linux driver compatibility** — reports of drives where Log Page 0x81 polling behaves unexpectedly are valuable for improving SSTAT handling.
 - **Technical peer review** — open a GitHub Issue for any corrections or improvements to the protocol specification, struct layout, or phase ordering rationale.
@@ -349,16 +366,21 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 ## Changelog
 
 ### v1.1 — June 6, 2026
-- **USB enclosure support added** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on Windows
-- **Three-tier passthrough auto-detection** — tool automatically probes and selects the best available pathway:
+- **USB enclosure support added — Linux and Windows** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on both platforms
+- **Linux three-tier passthrough auto-detection:**
+  - Tier 1: `nvme_admin_cmd` IOCTL (`0xC0484E41`) — NVMe direct (`/dev/nvme*`, full Log Page 0x81)
+  - Tier 2: `SG_IO` ioctl — ATA SANITIZE DEVICE via SCSI ATA PASS-THROUGH (16) (`/dev/sg*`)
+  - Tier 3: `BLKDISCARD` ioctl — block layer discard fallback (`/dev/sd*`)
+- **Linux auto-detects `/dev/sgX` from `/dev/sdX`** — no manual node lookup needed
+- **Windows three-tier passthrough auto-detection:**
   - Tier 1: `IOCTL_STORAGE_PROTOCOL_COMMAND` — NVMe direct (M.2/PCIe + UASP enclosures with NVMe passthrough)
   - Tier 2: `IOCTL_ATA_PASS_THROUGH` — ATA SANITIZE via SCSI/SAT (USB enclosures with UASP)
   - Tier 3: `IOCTL_STORAGE_REINITIALIZE_MEDIA` — Windows storage stack fallback
-- **Pathway recorded in audit report** — `pathway_used` field added to JSON report and every cycle record
-- **USB drive detection in `--list`** — now enumerates USB-attached NVMe drives alongside native NVMe
-- **ATA SANITIZE DEVICE** (command `0xB4`) implemented for Tier 2 — maps Phase B/C/A to ATA feature codes
+- **Pathway recorded in audit report** — `pathway_used` field added to JSON report and every cycle record on both platforms
+- **USB drive detection in `--list`** (Windows) — now enumerates USB-attached NVMe drives alongside native NVMe
+- **ATA SANITIZE DEVICE** (command `0xB4`) implemented for Tier 2 on both platforms — maps Phase B/C/A to ATA feature codes
 - **Time-based polling for Tier 2/3** — 120s/180s conservative wait per cycle when Log Page 0x81 unavailable
-- Windows port version bumped to v1.1 Beta
+- Linux stable version bumped to v1.1 | Windows port bumped to v1.1 Beta
 
 ### v1.0.2 — June 4, 2026
 - PDF Certificate of Destruction added — operator name, drive serial number, NIST/IEEE/ISO compliance, SHA-256 hash, professional A4 layout
