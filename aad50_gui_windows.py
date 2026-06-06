@@ -3,7 +3,7 @@
 # THE ABESELOM ASIC-DIRECT 50 (AAD-50) — WINDOWS GUI APPLICATION
 # ==============================================================================
 # Author      : Yonas Abeselom (yonas_abeselom@protonmail.com)
-# Version     : 1.0 (Windows GUI — Beta)
+# Version     : 1.1 (Windows GUI — Beta)
 # Date        : June 2026
 # Platform    : Windows 10 1607+ / Windows 11
 # Requires    : pip install customtkinter
@@ -247,10 +247,14 @@ try:
         TOTAL_CYCLES, AUTHORIZATION_TOKEN,
         SANITIZE_ACTION_OVERWRITE, SANITIZE_ACTION_BLOCK_ERASE,
         SANITIZE_ACTION_CRYPTO_ERASE,
-        enumerate_nvme_drives, validate_nvme_device,
+        TIER_NVME, TIER_ATA, TIER_STORAGE, TIER_NONE,
+        enumerate_drives, validate_nvme_device,
         open_device, close_device,
-        execute_nvme_sanitize, poll_until_complete,
-        verify_sanitization, read_sanitize_status, # direct telemetry reading
+        detect_passthrough_tier,
+        execute_sanitize_cycle,
+        poll_until_complete_nvme,
+        read_sanitize_status,
+        verify_sanitization,
         SanitizationReport, CycleRecord,
         is_admin, configure_logging,
     )
@@ -258,11 +262,15 @@ try:
 except ImportError:
     ENGINE_AVAILABLE = False
     TOOL_NAME    = "The Abeselom ASIC-Direct 50 (AAD-50)"
-    TOOL_VERSION = "1.0 (Windows GUI — Premium Tactical)"
+    TOOL_VERSION = "1.1 (Windows GUI — Beta)"
     AUTHOR       = "Yonas Abeselom"
     CONTACT      = "yonas_abeselom@protonmail.com"
     TOTAL_CYCLES = 50
     AUTHORIZATION_TOKEN = "EXECUTE-AAD-50-ABESELOM"
+    TIER_NVME = "NVMe-Direct"
+    TIER_ATA  = "ATA-Passthrough"
+    TIER_STORAGE = "Storage-Reinitialize"
+    TIER_NONE = "None"
     def read_sanitize_status(*args, **kwargs):
         return 0x0
 
@@ -417,7 +425,7 @@ class AAD50App(ctk.CTk):
         header_right.pack(side="right", padx=20, pady=6)
         ctk.CTkLabel(
             header_right,
-            text=f"v1.0  |  Developed by {AUTHOR}",
+            text=f"v1.1  |  Developed by {AUTHOR}",
             font=("Segoe UI", 9, "bold"),
             text_color=TEXT_HIGH
         ).pack(anchor="e")
@@ -737,14 +745,15 @@ class AAD50App(ctk.CTk):
         except Exception as e:
             self.status_label.configure(text=f"Direct Scan Error: {str(e)}")
 
-        # 2. Fallback to engine's NVMe PowerShell parser if direct probe returned empty
+        # 2. Fallback to engine's PowerShell parser if direct probe returned empty
         if not self.drives and ENGINE_AVAILABLE:
             try:
-                raw_drives = enumerate_nvme_drives()
+                raw_drives = enumerate_drives(include_usb=True)
                 letter_map = get_disk_to_drive_letter_map()
-                for idx, model, path in raw_drives:
+                for idx, model, path, bus_type in raw_drives:
                     letters = ", ".join(letter_map.get(str(idx), []))
-                    self.drives.append((idx, model, path, letters))
+                    usb_tag = " [USB]" if bus_type == "USB" else ""
+                    self.drives.append((idx, f"{model}{usb_tag}", path, letters))
             except Exception:
                 pass
 
@@ -1178,6 +1187,7 @@ class AAD50App(ctk.CTk):
             "operator": self.operator_name,
             "started_at": datetime.now(timezone.utc).isoformat(),
             "dry_run": self.dry_run.get(),
+            "pathway_used": TIER_NONE,
             "cycles": [],
             "outcome": "IN PROGRESS",
             "log_hash": None
@@ -1291,45 +1301,68 @@ class AAD50App(ctk.CTk):
             ("A", range(46, 51), SANITIZE_ACTION_CRYPTO_ERASE, "On-chip register state scramble", 0.05),
         ]
 
-        handle = None
-        success = True
+        handle      = None
+        success     = True
+        active_tier = TIER_NONE
 
         try:
             if not self.dry_run.get() and ENGINE_AVAILABLE:
-                handle = open_device(self.selected_drive[2])
+                # ── Tier detection ────────────────────────────────────────────
+                self._log_append("[PATHWAY DETECTION] Probing USB/NVMe passthrough tiers...")
+                active_tier, effective_path = detect_passthrough_tier(
+                    self.selected_drive[2],
+                    __import__('logging').getLogger()
+                )
+                if active_tier == TIER_NONE:
+                    self._log_append(
+                        "[CRITICAL FAULT] No passthrough tier supported. "
+                        "USB bridge is blocking all sanitize pathways."
+                    )
+                    success = False
+                    return
+
+                self._log_append(f"[PATHWAY CONFIRMED] Active tier: {active_tier}")
+                self.report_data["pathway_used"] = active_tier
+
+                # Use effective_path (may be /dev/sg* equivalent on some systems)
+                handle = open_device(effective_path)
                 if handle is None:
                     self._log_append("[CRITICAL SYSTEM FAULT] Direct handle generation returned empty.")
                     success = False
                     return
+            else:
+                active_tier = TIER_NVME  # Dry run simulates Tier 1
 
             for phase_key, cycles, action, action_name, delay in phases:
                 self.after(0, lambda k=phase_key: self._highlight_phase(k))
-                self._log_append(f"\n[PHASE INITIALIZATION] -> Phase {phase_key} active - {action_name}")
+                self._log_append(f"\n[PHASE INITIALIZATION] -> Phase {phase_key} active - {action_name} [{active_tier}]")
 
                 for cycle in cycles:
-                    ts = datetime.now(timezone.utc).isoformat()
-                    pct = cycle / TOTAL_CYCLES
-                    status = "OK"
+                    ts    = datetime.now(timezone.utc).isoformat()
+                    pct   = cycle / TOTAL_CYCLES
+                    status    = "OK"
                     error_msg = None
 
                     self.after(0, lambda c=cycle, p=pct: self._update_progress(c, p))
                     self.after(0, lambda c=cycle, a=action_name: self._update_action(
-                        f"Injecting Opcode 0x84 [Cycle {c:02d}/{TOTAL_CYCLES}] -> Parameters: CDW10=0x{action:02X}"
+                        f"Injecting Opcode 0x84 [Cycle {c:02d}/{TOTAL_CYCLES}] -> CDW10=0x{action:02X} [{active_tier}]"
                     ))
 
                     try:
                         if not self.dry_run.get() and ENGINE_AVAILABLE and handle:
-                            import logging
-                            execute_nvme_sanitize(handle, action, logging.getLogger())
-                            completed = poll_until_complete(handle, cycle, logging.getLogger())
+                            import logging as _logging
+                            completed = execute_sanitize_cycle(
+                                handle, action, cycle, active_tier,
+                                _logging.getLogger()
+                            )
                             if not completed:
-                                status = "TIMEOUT_ERROR"
+                                status  = "TIMEOUT_ERROR"
                                 success = False
                         else:
                             time.sleep(delay)
 
                     except Exception as e:
-                        status = "HARDWARE_I/O_FAULT"
+                        status    = "HARDWARE_I/O_FAULT"
                         error_msg = str(e)
                         self._log_append(f"  [BUS ERROR] Controller exception on cycle {cycle}: {e}")
                         success = False
@@ -1337,9 +1370,10 @@ class AAD50App(ctk.CTk):
                     self.report_data["cycles"].append({
                         "cycle": cycle, "phase": phase_key,
                         "action_code": action, "timestamp": ts,
-                        "status": status, "error": error_msg
+                        "status": status, "pathway": active_tier,
+                        "error": error_msg
                     })
-                    self._log_append(f"  Cycle {cycle:02d}/50 | Telemetry frame verified -> {status}")
+                    self._log_append(f"  Cycle {cycle:02d}/50 | {active_tier} | Telemetry frame verified -> {status}")
 
                     if not success:
                         break
@@ -1442,6 +1476,7 @@ class AAD50App(ctk.CTk):
             ("Drive Model",    self.report_data.get("drive_model", "")),
             ("Serial Number",  self.report_data.get("drive_serial", "Unknown")),
             ("Operator",       self.report_data.get("operator", "Not specified")),
+            ("Pathway",        self.report_data.get("pathway_used", TIER_NONE)),
             ("Cycles Completed", f"{len(self.report_data.get('cycles', []))} / {TOTAL_CYCLES}"),
             ("Started", self.report_data.get("started_at", "")[:19].replace("T", " ")),
             ("Completed", self.report_data.get("completed_at", "")[:19].replace("T", " ")),
@@ -1616,7 +1651,7 @@ class AAD50App(ctk.CTk):
             story.append(Paragraph("CERTIFICATE OF DATA DESTRUCTION", title_style))
             story.append(Spacer(1, 6*mm))
             story.append(Paragraph("The Abeselom ASIC-Direct 50 (AAD-50)", sub_style))
-            story.append(Paragraph("Firmware-Enforced NVMe Sanitization Protocol — v1.0", sub_style))
+            story.append(Paragraph("Firmware-Enforced NVMe Sanitization Protocol — v1.1", sub_style))
             story.append(Spacer(1, 6*mm))
             story.append(HRFlowable(width="100%", thickness=2, color=NAVY))
             story.append(Spacer(1, 4*mm))
@@ -1756,7 +1791,7 @@ class AAD50App(ctk.CTk):
             story.append(Spacer(1, 8*mm))
             story.append(HRFlowable(width="100%", thickness=1, color=LIGHT))
             story.append(Spacer(1, 2*mm))
-            story.append(Paragraph("Generated by AAD-50 v1.0  |  Developed by Yonas Abeselom", footer_style))
+            story.append(Paragraph("Generated by AAD-50 v1.1  |  Developed by Yonas Abeselom", footer_style))
             story.append(Paragraph("https://github.com/yonasabeselom/aad50", ParagraphStyle("FooterLink", fontName="Courier", fontSize=8, textColor=colors.HexColor("#2E8B47"), alignment=TA_CENTER)))
             story.append(Spacer(1, 1*mm))
             story.append(Paragraph("This certificate is valid only when accompanied by the corresponding JSON audit report.", footer_style))
