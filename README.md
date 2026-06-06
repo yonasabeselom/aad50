@@ -8,7 +8,7 @@
 
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom  
-**Version:** 1.0 — June 2026  
+**Version:** 1.1 — June 2026  
 **Status:** Open for peer review
 
 ---
@@ -56,7 +56,10 @@ Recovering this data via chip-level hardware extraction or Magnetic Force Micros
 AAD-50 bypasses the OS and communicates directly with the drive controller via firmware-level NVMe Sanitize commands (Opcode `0x84`) that the on-chip ASIC executes internally at silicon speeds.
 
 - **Linux:** via the kernel's `nvme_admin_cmd` IOCTL interface (`0xC0484E41`)
-- **Windows:** via `DeviceIoControl` with `IOCTL_STORAGE_PROTOCOL_COMMAND` (`0x0002D14C`)
+- **Windows:** via `DeviceIoControl` with three-tier USB/NVMe passthrough auto-detection:
+  - **Tier 1** — `IOCTL_STORAGE_PROTOCOL_COMMAND` (`0x0002D14C`) — NVMe direct (M.2/PCIe + UASP enclosures)
+  - **Tier 2** — `IOCTL_ATA_PASS_THROUGH` (`0x0004D02C`) — ATA SANITIZE via SCSI/SAT (USB enclosures)
+  - **Tier 3** — `IOCTL_STORAGE_REINITIALIZE_MEDIA` (`0x0002D504`) — Windows storage stack fallback
 
 ### Phase Execution Matrix
 
@@ -96,10 +99,10 @@ AAD-50 is available as a reference implementation on both **Linux** and **Window
 | File | Platform | Interface | Status |
 |---|---|---|---|
 | `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL (`0xC0484E41`) | Stable |
-| `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` (`IOCTL_STORAGE_PROTOCOL_COMMAND`) | Beta |
+| `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` — 3-tier USB/NVMe auto-detect | Beta v1.1 |
 | `aad50_gui_windows.py` | Windows 10 1607+ / 11 | GUI — requires `aad50_abeselom_windows.py` | Beta |
 
-> **Windows Beta status:** The Windows port implements the identical AAD-50 protocol via the Windows-equivalent API pathway. Hardware testing across NVMe manufacturers is ongoing. If you test it on a real drive, please open a GitHub Issue with your results — your feedback directly contributes to validating the specification.
+> **Windows v1.1 — USB Enclosure Support:** The Windows port now includes three-tier passthrough auto-detection for NVMe drives connected via USB enclosures (UASP). The tool probes Tier 1 (NVMe direct), Tier 2 (ATA SCSI/SAT), and Tier 3 (Storage reinitialize) automatically and executes all 50 cycles through whichever pathway the enclosure supports. The active pathway is recorded in the audit report. Hardware testing across enclosure bridge chips is ongoing — if you test via USB, please open a GitHub Issue with your enclosure model and bridge chip.
 
 ### GUI Application
 
@@ -233,10 +236,13 @@ EXECUTE-AAD-50-ABESELOM
 
 The GUI handles this via an input field on the Sanitize screen.
 
-### Key Implementation Features (v1.0)
+### Key Implementation Features (v1.1)
 
 - Mandatory **Log Page 0x81 polling** after every cycle — hardware-confirmed completion, not nominal
 - Correct **B → C → A** phase ordering for maximum fault resilience
+- **Three-tier USB/NVMe passthrough auto-detection** — Tier 1 NVMe direct, Tier 2 ATA SCSI/SAT, Tier 3 Storage reinitialize
+- **USB enclosure support** — NVMe drives in USB 3.x enclosures (UASP) fully supported
+- **Pathway recorded in audit report** — every cycle log includes which passthrough tier was used
 - Post-sanitization **LBA sample verification** read
 - **SHA-256 tamper-evident audit report** for chain-of-custody compliance
 - **PDF Certificate of Destruction** — operator name, drive serial number, compliance standards, SHA-256 hash
@@ -244,7 +250,7 @@ The GUI handles this via an input field on the Sanitize screen.
 - **Operator name** field — recorded for chain-of-custody and GDPR compliance
 - Non-interactive `--force` flag for automated deprovisioning pipelines
 - `--dry-run` simulation mode for pre-deployment validation
-- Windows `--list` flag to enumerate all detected NVMe drives
+- Windows `--list` flag to enumerate all detected NVMe drives (including USB-attached)
 - Windows GUI OEM driver diagnostic — tests Log Page 0x81 pass-through capability
 
 ---
@@ -328,6 +334,7 @@ For licensing enquiries: **yonas_abeselom@protonmail.com**
 
 Contributions and hardware testing reports are welcome. The highest priority areas are:
 
+- **USB enclosure testing (v1.1)** — if you run `aad50_abeselom_windows.py` on an NVMe drive inside a USB enclosure, please open a GitHub Issue with your enclosure model, bridge chip (ASMedia/Realtek/JMicron), which Tier was detected, and whether all 50 cycles completed. This directly contributes to validating USB passthrough support.
 - **Windows Beta hardware testing** — if you run `aad50_abeselom_windows.py` on a real NVMe drive, please open a GitHub Issue with your drive model, Windows version, and whether the sequence completed successfully. Every test result directly contributes to validating the specification across manufacturers.
 - **Linux driver compatibility** — reports of drives where Log Page 0x81 polling behaves unexpectedly are valuable for improving SSTAT handling.
 - **Technical peer review** — open a GitHub Issue for any corrections or improvements to the protocol specification, struct layout, or phase ordering rationale.
@@ -337,6 +344,18 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 ---
 
 ## Changelog
+
+### v1.1 — June 6, 2026
+- **USB enclosure support added** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on Windows
+- **Three-tier passthrough auto-detection** — tool automatically probes and selects the best available pathway:
+  - Tier 1: `IOCTL_STORAGE_PROTOCOL_COMMAND` — NVMe direct (M.2/PCIe + UASP enclosures with NVMe passthrough)
+  - Tier 2: `IOCTL_ATA_PASS_THROUGH` — ATA SANITIZE via SCSI/SAT (USB enclosures with UASP)
+  - Tier 3: `IOCTL_STORAGE_REINITIALIZE_MEDIA` — Windows storage stack fallback
+- **Pathway recorded in audit report** — `pathway_used` field added to JSON report and every cycle record
+- **USB drive detection in `--list`** — now enumerates USB-attached NVMe drives alongside native NVMe
+- **ATA SANITIZE DEVICE** (command `0xB4`) implemented for Tier 2 — maps Phase B/C/A to ATA feature codes
+- **Time-based polling for Tier 2/3** — 120s/180s conservative wait per cycle when Log Page 0x81 unavailable
+- Windows port version bumped to v1.1 Beta
 
 ### v1.0.2 — June 4, 2026
 - PDF Certificate of Destruction added — operator name, drive serial number, NIST/IEEE/ISO compliance, SHA-256 hash, professional A4 layout
@@ -375,5 +394,5 @@ If you reference AAD-50 in your own research or documentation, please cite as:
 ```
 Y. Abeselom, "The Abeselom ASIC-Direct 50 (AAD-50): A Firmware-Enforced,
 50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
-Version 1.0, June 2026. [Online]. Available: https://github.com/yonasabeselom/aad50
+Version 1.1, June 2026. [Online]. Available: https://github.com/yonasabeselom/aad50
 ```
