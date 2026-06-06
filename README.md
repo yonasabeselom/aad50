@@ -55,7 +55,10 @@ Recovering this data via chip-level hardware extraction or Magnetic Force Micros
 
 AAD-50 bypasses the OS and communicates directly with the drive controller via firmware-level NVMe Sanitize commands (Opcode `0x84`) that the on-chip ASIC executes internally at silicon speeds.
 
-- **Linux:** via the kernel's `nvme_admin_cmd` IOCTL interface (`0xC0484E41`)
+- **Linux:** via three-tier USB/NVMe passthrough auto-detection:
+  - **Tier 1** — `nvme_admin_cmd` IOCTL (`0xC0484E41`) — NVMe direct (`/dev/nvme*`, full Log Page 0x81)
+  - **Tier 2** — `SG_IO` ioctl — ATA SANITIZE via SCSI ATA PASS-THROUGH (16) (`/dev/sg*`, USB enclosures)
+  - **Tier 3** — `BLKDISCARD` ioctl — block layer discard fallback (`/dev/sd*`)
 - **Windows:** via `DeviceIoControl` with three-tier USB/NVMe passthrough auto-detection:
   - **Tier 1** — `IOCTL_STORAGE_PROTOCOL_COMMAND` (`0x0002D14C`) — NVMe direct (M.2/PCIe + UASP enclosures)
   - **Tier 2** — `IOCTL_ATA_PASS_THROUGH` (`0x0004D02C`) — ATA SANITIZE via SCSI/SAT (USB enclosures)
