@@ -114,8 +114,8 @@ AAD-50 is available as a reference implementation on both **Linux** and **Window
 The Windows GUI application (`aad50_gui_windows.py`) provides a full graphical interface for AAD-50 with five screens:
 
 - **Home Dashboard** — phase matrix, stats, and quick start
-- **Select Drive** — auto-detects all NVMe drives with model, path, and volume labels
-- **Sanitize Drive** — destruction warning shield, authorization token, live 50-cycle progress dashboard
+- **Select Drive** — auto-detects all NVMe drives with model, path, and volume labels — including USB-attached NVMe drives (shown with `[USB]` tag)
+- **Sanitize Drive** — destruction warning shield, authorization token, live 50-cycle progress dashboard, active passthrough pathway display
 - **Audit Reports** — load and verify any saved JSON audit report via SHA-256 hash recalculation
 - **About** — tool information, compliance standards, OEM driver diagnostic
 
@@ -380,6 +380,9 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 - **USB drive detection in `--list`** (Windows) — now enumerates USB-attached NVMe drives alongside native NVMe
 - **ATA SANITIZE DEVICE** (command `0xB4`) implemented for Tier 2 on both platforms — maps Phase B/C/A to ATA feature codes
 - **Time-based polling for Tier 2/3** — 120s/180s conservative wait per cycle when Log Page 0x81 unavailable
+- **GUI updated to v1.1** — pathway tier shown in telemetry stream and completion summary, `pathway_used` field added to JSON report, USB drives shown in drive selector with `[USB]` tag
+- **Windows GUI v1.1 dry-run confirmed** — 50/50 cycles, SHA-256 hash verified, PDF Certificate generated (WDC PC SN730 SDBQNTY-256G-1001, `\\.\PhysicalDrive0`, Windows 11)
+- GUI SHA-256 audit hash: `02c37fdbb3bc06cf354685e85fc31880037b266fc708bf8f583d7be4ba3b2384`
 - Linux stable version bumped to v1.1 | Windows port bumped to v1.1 Beta
 
 ### v1.0.2 — June 4, 2026
