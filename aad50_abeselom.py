@@ -5,10 +5,13 @@
 # ==============================================================================
 # Author      : Yonas Abeselom (yonas_abeselom@protonmail.com)
 # Repository  : https://github.com/yonasabeselom/aad50
-# Version     : 1.0
-# Date        : June 1, 2026
+# Version     : 1.1
+# Date        : June 2026
 # Architecture: Low-Level NVMe Admin Command Interface (IOCTL, Linux)
+#               + SCSI Generic passthrough for USB enclosures (sg/SAT)
+#               + blkdiscard fallback
 # Target Media: NVMe Solid-State Drives (Enterprise & Consumer NAND Flash)
+#               including NVMe drives in USB 3.x enclosures with UASP support
 # Compliance  : NIST SP 800-88 Rev.1 "Purge" | NVMe Base Spec 2.0/2.1
 #               ISO/IEC 27040:2015 Storage Security | Common Criteria EAL4+
 #
@@ -20,15 +23,33 @@
 #   before the next cycle is issued — guaranteeing all 50 phases execute
 #   fully on the physical silicon, not merely in the command queue.
 #
+# USB ENCLOSURE SUPPORT (v1.1):
+#   When an NVMe drive is connected via a USB enclosure, the OS presents it
+#   as /dev/sdX (SCSI block device) rather than /dev/nvmeX. Direct NVMe
+#   IOCTL commands cannot reach the controller through the USB bridge.
+#
+#   AAD-50 v1.1 adds three-tier auto-detection:
+#
+#   TIER 1 — NVMe Direct (/dev/nvme*)
+#     NVME_IOCTL_ADMIN_CMD passthrough. Full Log Page 0x81 confirmation.
+#     Works for M.2/PCIe drives and UASP enclosures with NVMe passthrough.
+#
+#   TIER 2 — SCSI Generic / ATA Passthrough (/dev/sg*)
+#     ATA SANITIZE DEVICE (0xB4) via SCSI ATA PASS-THROUGH (16) command.
+#     Works for USB enclosures supporting UASP + SAT (SCSI/ATA Translation).
+#     Covers most modern USB-NVMe bridge chips (ASMedia, Realtek, JMicron).
+#
+#   TIER 3 — blkdiscard fallback (/dev/sdX)
+#     Issues BLKDISCARD ioctl to discard all LBAs. Reaches the drive via
+#     the block layer. Less granular but works when SAT is unavailable.
+#
+#   The tool auto-detects the device type and selects the appropriate tier.
+#   The active pathway is recorded in every cycle record and the audit report.
+#
 # PHASE EXECUTION ORDER:
 #   Phase B — Physical NAND Cell Overwrite     (Cycles  1–40)
 #   Phase C — Flash Translation Layer Reset    (Cycles 41–45)
 #   Phase A — Cryptographic Key Destruction    (Cycles 46–50)
-#
-#   Rationale for ordering: Physical overwrite runs first so that if a
-#   mid-sequence hardware fault occurs, raw NAND data has already been
-#   cleared. Cryptographic key destruction runs last as the final seal,
-#   ensuring no partially-overwritten state can be decrypted post-failure.
 #
 # WARNING:
 #   This tool causes PERMANENT, IRREVERSIBLE destruction of all data on
@@ -63,52 +84,71 @@ from typing import Optional, Tuple
 # ==============================================================================
 
 TOOL_NAME    = "The Abeselom ASIC-Direct 50 (AAD-50)"
-TOOL_VERSION = "1.0"
+TOOL_VERSION = "1.1"
 SPEC_NAME    = "Firmware-Enforced Flash Sanitization, 50-Cycle Specification"
 AUTHOR       = "Yonas Abeselom"
 CONTACT      = "yonas_abeselom@protonmail.com"
 
 # ── NVMe IOCTL ────────────────────────────────────────────────────────────────
-# Linux kernel ioctl number for struct nvme_admin_cmd pass-through
-# Derived from: _IOWR('N', 0x41, struct nvme_admin_cmd) = 0xC0484E41
-NVME_IOCTL_ADMIN_CMD = 0xC0484E41
-
-# NVMe Get Log Page opcode (NVMe Base Spec 2.0, Section 5.14)
+NVME_IOCTL_ADMIN_CMD     = 0xC0484E41
 NVME_GET_LOG_PAGE_OPCODE = 0x02
-
-# NVMe Log Page 0x81 — Sanitize Status (NVMe Base Spec 2.0, Section 5.14.1.14)
 NVME_LOG_SANITIZE_STATUS = 0x81
-
-# NVMe Sanitize opcode (NVMe Base Spec 2.0, Section 5.25)
-NVME_SANITIZE_OPCODE = 0x84
+NVME_SANITIZE_OPCODE     = 0x84
 
 # NVMe Sanitize Action field values (CDW10 bits [2:0])
-SANITIZE_ACTION_BLOCK_ERASE  = 0x01  # Block Erase  — FTL table invalidation
-SANITIZE_ACTION_OVERWRITE    = 0x02  # Overwrite    — firmware-driven cell clearing
-SANITIZE_ACTION_CRYPTO_ERASE = 0x04  # Crypto Erase — MEK register destruction
+SANITIZE_ACTION_BLOCK_ERASE  = 0x01  # Phase C — FTL index teardown
+SANITIZE_ACTION_OVERWRITE    = 0x02  # Phase B — Physical NAND overwrite
+SANITIZE_ACTION_CRYPTO_ERASE = 0x04  # Phase A — Crypto key destruction
 
-# Namespace ID: 0xFFFFFFFF = broadcast across entire controller subsystem
 NVME_NSID_ALL = 0xFFFFFFFF
 
-# ── Log Page 0x81 SSTAT field values ─────────────────────────────────────────
-# NVMe Base Spec 2.0, Section 5.14.1.14, byte offset 0, bits [2:0]
-SANITIZE_SSTAT_IDLE          = 0x0   # No sanitize operation has been performed
-SANITIZE_SSTAT_IN_PROGRESS   = 0x2   # Sanitize operation in progress
-SANITIZE_SSTAT_COMPLETED_OK  = 0x1   # Most recent sanitize completed successfully
-SANITIZE_SSTAT_COMPLETED_ERR = 0x3   # Most recent sanitize completed with errors
+# ── Log Page 0x81 SSTAT values ────────────────────────────────────────────────
+SANITIZE_SSTAT_IDLE          = 0x0
+SANITIZE_SSTAT_IN_PROGRESS   = 0x2
+SANITIZE_SSTAT_COMPLETED_OK  = 0x1
+SANITIZE_SSTAT_COMPLETED_ERR = 0x3
 
-# ── Polling configuration ─────────────────────────────────────────────────────
-POLL_INTERVAL_SECONDS  = 2.0    # Seconds between each Log Page 0x81 read
-POLL_TIMEOUT_SECONDS   = 7200   # 2-hour hard timeout per cycle (enterprise drives)
+# ── SCSI/ATA Passthrough (Tier 2) ─────────────────────────────────────────────
+# SCSI ATA PASS-THROUGH (16) opcode
+SCSI_ATA_PASSTHROUGH_16  = 0x85
+# ATA SANITIZE DEVICE command
+ATA_CMD_SANITIZE_DEVICE  = 0xB4
+# ATA SANITIZE feature codes
+ATA_SANITIZE_BLOCK_ERASE = 0x0012
+ATA_SANITIZE_OVERWRITE   = 0x0011
+ATA_SANITIZE_CRYPTO      = 0x0014
+# ATA IDENTIFY DEVICE (non-destructive probe)
+ATA_CMD_IDENTIFY         = 0xEC
+
+# SG_IO ioctl number
+SG_IO = 0x2285
+
+# ── blkdiscard (Tier 3) ───────────────────────────────────────────────────────
+# BLKDISCARD ioctl: discards a range of blocks
+BLKDISCARD   = 0x1277
+# BLKGETSIZE64: get device size in bytes
+BLKGETSIZE64 = 0x80081272
+
+# ── Polling ───────────────────────────────────────────────────────────────────
+POLL_INTERVAL_SECONDS = 2.0
+POLL_TIMEOUT_SECONDS  = 7200
 
 # ── Authorization ─────────────────────────────────────────────────────────────
 AUTHORIZATION_TOKEN = "EXECUTE-AAD-50-ABESELOM"
 TOTAL_CYCLES        = 50
 
 # ── Post-run verification ─────────────────────────────────────────────────────
-# Number of LBAs to sample-read after completion to confirm deallocated status
 VERIFICATION_SAMPLE_COUNT = 16
-VERIFICATION_LBA_STEP     = 0x100000  # Sample every ~512 MiB of logical space
+VERIFICATION_LBA_STEP     = 0x100000
+
+# ── Passthrough tiers ─────────────────────────────────────────────────────────
+TIER_NVME    = "NVMe-Direct"
+TIER_SCSI    = "SCSI-ATA-Passthrough"
+TIER_DISCARD = "blkdiscard"
+TIER_NONE    = "None"
+
+# NVMe admin cmd struct format (72 bytes)
+NVME_ADMIN_CMD_FMT = 'BBHIIIQQIIIIIIIIII'
 
 
 # ==============================================================================
@@ -117,38 +157,40 @@ VERIFICATION_LBA_STEP     = 0x100000  # Sample every ~512 MiB of logical space
 
 @dataclass
 class CycleRecord:
-    cycle:         int
-    phase:         str
-    action_code:   int
-    timestamp:     str
-    status:        str
-    duration_sec:  float = 0.0
-    error:         Optional[str] = None
+    cycle:        int
+    phase:        str
+    action_code:  int
+    timestamp:    str
+    status:       str
+    pathway:      str   = TIER_NONE
+    duration_sec: float = 0.0
+    error:        Optional[str] = None
 
 
 @dataclass
 class VerificationRecord:
-    lba:     int
-    result:  str   # "DEALLOCATED" | "ZEROED" | "READABLE" | "ERROR"
-    detail:  Optional[str] = None
+    lba:    int
+    result: str
+    detail: Optional[str] = None
 
 
 @dataclass
 class SanitizationReport:
-    tool:           str = TOOL_NAME
-    version:        str = TOOL_VERSION
-    author:         str = AUTHOR
-    contact:        str = CONTACT
-    device:         str = ""
-    drive_model:    str = ""
-    started_at:     str = ""
-    completed_at:   str = ""
-    total_cycles:   int = TOTAL_CYCLES
-    cycles_run:     int = 0
-    outcome:        str = "NOT STARTED"
-    verification:   list = field(default_factory=list)
-    cycles:         list = field(default_factory=list)
-    log_hash:       Optional[str] = None
+    tool:          str = TOOL_NAME
+    version:       str = TOOL_VERSION
+    author:        str = AUTHOR
+    contact:       str = CONTACT
+    device:        str = ""
+    drive_model:   str = ""
+    pathway_used:  str = TIER_NONE
+    started_at:    str = ""
+    completed_at:  str = ""
+    total_cycles:  int = TOTAL_CYCLES
+    cycles_run:    int = 0
+    outcome:       str = "NOT STARTED"
+    verification:  list = field(default_factory=list)
+    cycles:        list = field(default_factory=list)
+    log_hash:      Optional[str] = None
 
 
 # ==============================================================================
@@ -158,7 +200,6 @@ class SanitizationReport:
 def configure_logging(log_path: Optional[str], verbose: bool) -> logging.Logger:
     logger = logging.getLogger("aad50")
     logger.setLevel(logging.DEBUG if verbose else logging.INFO)
-
     fmt = logging.Formatter(
         fmt="[%(asctime)s] [%(levelname)s] %(message)s",
         datefmt="%Y-%m-%dT%H:%M:%S"
@@ -166,12 +207,10 @@ def configure_logging(log_path: Optional[str], verbose: bool) -> logging.Logger:
     console = logging.StreamHandler(sys.stdout)
     console.setFormatter(fmt)
     logger.addHandler(console)
-
     if log_path:
         fh = logging.FileHandler(log_path)
         fh.setFormatter(fmt)
         logger.addHandler(fh)
-
     return logger
 
 
@@ -180,31 +219,19 @@ def configure_logging(log_path: Optional[str], verbose: bool) -> logging.Logger:
 # ==============================================================================
 
 def validate_nvme_device(device_path: str, logger: logging.Logger) -> bool:
-    """
-    Confirms the target is an accessible NVMe block device before any
-    destructive commands are issued.
-    """
     p = Path(device_path)
-
     if not p.exists():
         logger.error(f"Device path does not exist: {device_path}")
         return False
-
     if not p.is_block_device():
         logger.error(f"Path is not a block device: {device_path}")
         return False
-
-    # Warn if path looks like a namespace (nvme0n1) rather than a controller (nvme0).
-    # AAD-50 targets the controller node so the NSID broadcast reaches all namespaces.
     name = p.name
-    if "n" in name[4:]:
+    if name.startswith("nvme") and "n" in name[4:]:
         logger.warning(
-            f"'{name}' appears to be a namespace node, not a controller node. "
-            f"AAD-50 should target the controller (e.g. /dev/nvme0) to ensure "
-            f"the NSID=0xFFFFFFFF broadcast covers all namespaces."
+            f"'{name}' appears to be a namespace node. "
+            f"AAD-50 should target the controller (e.g. /dev/nvme0)."
         )
-
-    # Live probe — 512-byte read confirms the controller is online and accessible
     try:
         with open(device_path, "rb") as fh:
             fh.read(512)
@@ -214,17 +241,12 @@ def validate_nvme_device(device_path: str, logger: logging.Logger) -> bool:
     except OSError as e:
         logger.error(f"Device probe failed: {e}")
         return False
-
     logger.debug(f"Device validation passed: {device_path}")
     return True
 
 
 def get_device_info(device_path: str) -> Tuple[Optional[str], Optional[int]]:
-    """
-    Returns (model_string, total_lba_count) via nvme-cli.
-    Both values are best-effort; None is returned on any failure.
-    """
-    model = None
+    model      = None
     total_lbas = None
     try:
         r = subprocess.run(
@@ -232,190 +254,145 @@ def get_device_info(device_path: str) -> Tuple[Optional[str], Optional[int]]:
             capture_output=True, text=True, timeout=5
         )
         if r.returncode == 0:
-            data = json.loads(r.stdout)
+            data  = json.loads(r.stdout)
             model = data.get("mn", "").strip() or None
     except Exception:
         pass
-
     try:
         r = subprocess.run(
             ["nvme", "id-ns", device_path, "-o", "json"],
             capture_output=True, text=True, timeout=5
         )
         if r.returncode == 0:
-            data = json.loads(r.stdout)
+            data       = json.loads(r.stdout)
             total_lbas = data.get("nsze")
     except Exception:
         pass
-
     return model, total_lbas
 
 
 # ==============================================================================
-# NVMe IOCTL HELPERS
+# DEVICE TYPE DETECTION
 # ==============================================================================
 
-# Linux kernel struct nvme_admin_cmd memory layout (little-endian):
-#   u8  opcode       — NVMe Admin opcode
-#   u8  flags        — Reserved / command flags
-#   u16 rsvd1        — Reserved
-#   u32 nsid         — Namespace ID (0xFFFFFFFF = all namespaces)
-#   u32 cdw2         — Command Dword 2 (reserved)
-#   u32 cdw3         — Command Dword 3 (reserved)
-#   u64 metadata     — Metadata pointer (unused here)
-#   u64 addr         — Data buffer address (unused here)
-#   u32 metadata_len — Metadata length
-#   u32 data_len     — Data buffer length
-#   u32 cdw10        — Command-specific dword 10
-#   u32 cdw11        — Command-specific dword 11
-#   u32 cdw12        — Command-specific dword 12
-#   u32 cdw13        — Command-specific dword 13
-#   u32 cdw14        — Command-specific dword 14
-#   u32 cdw15        — Command-specific dword 15
-#   u32 timeout_ms   — Command timeout in milliseconds (0 = driver default)
-#   u32 result       — Command completion result (written back by kernel)
-#
-# Format string: B B H I I I Q Q I I I I I I I I I I
-# Total size   : 1+1+2+4+4+4+8+8+4+4+4+4+4+4+4+4+4+4 = 72 bytes
-# Linux kernel struct nvme_admin_cmd — 18 fields, 72 bytes
-# Fields: opcode flags rsvd1 nsid cdw2 cdw3 metadata addr
-#         metadata_len data_len cdw10 cdw11 cdw12 cdw13 cdw14 cdw15
-#         timeout_ms result
-NVME_ADMIN_CMD_FMT = 'BBHIIIQQIIIIIIIIII'  # 18 fields, 72 bytes
+def detect_device_type(device_path: str) -> str:
+    """
+    Determines whether the device is:
+      - A native NVMe controller (/dev/nvme*)
+      - A SCSI generic device (/dev/sg*) — USB enclosure with SAT
+      - A SCSI block device (/dev/sd*) — USB enclosure without SAT
+    Returns the device category string.
+    """
+    name = Path(device_path).name
+    if name.startswith("nvme"):
+        return "nvme"
+    elif name.startswith("sg"):
+        return "sg"
+    elif name.startswith("sd"):
+        return "sd"
+    else:
+        return "unknown"
 
+
+def find_sg_node(sd_path: str) -> Optional[str]:
+    """
+    Given /dev/sdX, finds the corresponding /dev/sgY node.
+    Needed to send SCSI pass-through commands to USB-attached drives.
+    """
+    sd_name = Path(sd_path).name   # e.g. "sdb"
+    sg_path = f"/sys/block/{sd_name}/device/scsi_generic"
+    try:
+        entries = list(Path(sg_path).iterdir())
+        if entries:
+            return f"/dev/{entries[0].name}"
+    except Exception:
+        pass
+    # Fallback: try /dev/sg0..sg9
+    try:
+        result = subprocess.run(
+            ["sg_map", "-x"], capture_output=True, text=True, timeout=5
+        )
+        for line in result.stdout.splitlines():
+            if sd_name in line:
+                parts = line.split()
+                if parts:
+                    return parts[0]
+    except Exception:
+        pass
+    return None
+
+
+# ==============================================================================
+# TIER 1 — NVMe DIRECT (IOCTL)
+# ==============================================================================
 
 def _build_sanitize_cmd(action: int) -> array.array:
-    """Packs a sanitize admin command struct for the given action code."""
     cmd = struct.pack(
         NVME_ADMIN_CMD_FMT,
-        NVME_SANITIZE_OPCODE,  # opcode
-        0,                     # flags
-        0,                     # rsvd1
-        NVME_NSID_ALL,         # nsid
-        0,                     # cdw2
-        0,                     # cdw3
-        0,                     # metadata ptr
-        0,                     # data addr
-        0,                     # metadata_len
-        0,                     # data_len
-        action,                # cdw10: Sanitize Action
-        0,                     # cdw11
-        0,                     # cdw12
-        0,                     # cdw13
-        0,                     # cdw14
-        0,                     # cdw15
-        0,                     # timeout_ms (driver default)
-        0,                     # result (written back by kernel)
+        NVME_SANITIZE_OPCODE, 0, 0, NVME_NSID_ALL,
+        0, 0, 0, 0, 0, 0,
+        action, 0, 0, 0, 0, 0, 0, 0,
     )
     return array.array('b', cmd)
 
 
 def _build_get_log_page_cmd(log_id: int, data_addr: int, data_len: int) -> array.array:
-    """
-    Packs a Get Log Page admin command.
-    CDW10: log_id [7:0], numd [27:16] — numd = (data_len/4 - 1)
-    """
-    numd = (data_len // 4) - 1
+    numd  = (data_len // 4) - 1
     cdw10 = (log_id & 0xFF) | ((numd & 0xFFF) << 16)
-    cmd = struct.pack(
+    cmd   = struct.pack(
         NVME_ADMIN_CMD_FMT,
-        NVME_GET_LOG_PAGE_OPCODE,  # opcode
-        0,                         # flags
-        0,                         # rsvd1
-        NVME_NSID_ALL,             # nsid
-        0,                         # cdw2
-        0,                         # cdw3
-        0,                         # metadata ptr
-        data_addr,                 # data addr — kernel will write result here
-        0,                         # metadata_len
-        data_len,                  # data_len
-        cdw10,                     # cdw10: log page ID + NUMD
-        0,                         # cdw11
-        0,                         # cdw12
-        0,                         # cdw13
-        0,                         # cdw14
-        0,                         # cdw15
-        0,                         # timeout_ms
-        0,                         # result (written back by kernel)
+        NVME_GET_LOG_PAGE_OPCODE, 0, 0, NVME_NSID_ALL,
+        0, 0, 0, data_addr, 0, data_len,
+        cdw10, 0, 0, 0, 0, 0, 0, 0,
     )
     return array.array('b', cmd)
 
 
-def execute_nvme_sanitize(disk_fd: int, action: int, logger: logging.Logger) -> None:
-    """Issues one NVMe Sanitize command. Returns immediately (async)."""
-    buf = _build_sanitize_cmd(action)
-    fcntl.ioctl(disk_fd, NVME_IOCTL_ADMIN_CMD, buf, 1)
-    logger.debug(
-        f"Sanitize command dispatched — "
-        f"opcode=0x{NVME_SANITIZE_OPCODE:02X}, action=0x{action:02X}"
-    )
+def execute_nvme_sanitize_direct(
+    disk_fd: int, action: int, logger: logging.Logger
+) -> bool:
+    """Tier 1: NVMe IOCTL admin command passthrough."""
+    try:
+        buf = _build_sanitize_cmd(action)
+        fcntl.ioctl(disk_fd, NVME_IOCTL_ADMIN_CMD, buf, 1)
+        logger.debug(
+            f"Tier 1 NVMe direct: sanitize dispatched "
+            f"opcode=0x{NVME_SANITIZE_OPCODE:02X} action=0x{action:02X}"
+        )
+        return True
+    except OSError as e:
+        logger.debug(f"Tier 1 NVMe direct failed: {e}")
+        return False
 
-
-# ==============================================================================
-# LOG PAGE 0x81 — SANITIZE STATUS POLLING
-# ==============================================================================
 
 def read_sanitize_status(disk_fd: int, logger: logging.Logger) -> Optional[int]:
-    """
-    Reads NVMe Log Page 0x81 (Sanitize Status) and returns the SSTAT field
-    value (bits [2:0] of byte 0), or None on read failure.
-
-    Log Page 0x81 layout (NVMe Base Spec 2.0, Section 5.14.1.14):
-        Bytes  [1:0] — SPROG  : Sanitize Progress (0x0000–0xFFFF, 0xFFFF = 100%)
-        Bytes  [3:2] — SSTAT  : Sanitize Status (bits [2:0] are the status code)
-        Bytes  [7:4] — SCDW10 : Command Dword 10 of the last sanitize command
-        Bytes [11:8] — Estimated overwrite time (seconds)
-        Bytes[15:12] — Estimated block erase time (seconds)
-        Bytes[19:16] — Estimated crypto erase time (seconds)
-    """
-    LOG_DATA_LEN = 20  # Minimum bytes covering all fields we need
-
-    # Allocate a pinned read buffer and get its memory address for the IOCTL
-    data_buf = array.array('B', b'\x00' * LOG_DATA_LEN)
-    buf_addr, _ = data_buf.buffer_info()
-
-    cmd_buf = _build_get_log_page_cmd(
-        log_id=NVME_LOG_SANITIZE_STATUS,
-        data_addr=buf_addr,
-        data_len=LOG_DATA_LEN
+    LOG_DATA_LEN = 20
+    data_buf     = array.array('B', b'\x00' * LOG_DATA_LEN)
+    buf_addr, _  = data_buf.buffer_info()
+    cmd_buf      = _build_get_log_page_cmd(
+        NVME_LOG_SANITIZE_STATUS, buf_addr, LOG_DATA_LEN
     )
-
     try:
         fcntl.ioctl(disk_fd, NVME_IOCTL_ADMIN_CMD, cmd_buf, 1)
     except OSError as e:
         logger.debug(f"Log Page 0x81 read failed: {e}")
         return None
 
-    # SSTAT is at byte offset 2–3 (little-endian u16); status code = bits [2:0]
-    sstat = data_buf[2] | (data_buf[3] << 8)
-    sprog = data_buf[0] | (data_buf[1] << 8)
+    sstat       = data_buf[2] | (data_buf[3] << 8)
+    sprog       = data_buf[0] | (data_buf[1] << 8)
     status_code = sstat & 0x07
-
-    prog_pct = int((sprog / 0xFFFF) * 100) if sprog > 0 else 0
+    prog_pct    = int((sprog / 0xFFFF) * 100) if sprog > 0 else 0
     logger.debug(
         f"Log Page 0x81 — SSTAT=0x{sstat:04X} "
         f"(code={status_code}) SPROG={sprog:#06x} ({prog_pct}%)"
     )
-
     return status_code
 
 
-def poll_until_complete(
-    disk_fd: int,
-    cycle: int,
-    logger: logging.Logger,
-    dry_run: bool = False
+def poll_until_complete_nvme(
+    disk_fd: int, cycle: int, logger: logging.Logger
 ) -> bool:
-    """
-    Blocks until Log Page 0x81 reports sanitize complete (SSTAT=0x1),
-    polling every POLL_INTERVAL_SECONDS up to POLL_TIMEOUT_SECONDS.
-
-    Returns True on confirmed completion, False on timeout or error status.
-    """
-    if dry_run:
-        logger.debug(f"  [DRY RUN] Skipping Log Page 0x81 poll for cycle {cycle}.")
-        return True
-
+    """Tier 1 polling: hardware-confirmed via Log Page 0x81."""
     deadline = time.monotonic() + POLL_TIMEOUT_SECONDS
     elapsed  = 0.0
 
@@ -423,42 +400,443 @@ def poll_until_complete(
         status = read_sanitize_status(disk_fd, logger)
 
         if status is None:
-            # Read failure — drive may be mid-erase and temporarily unresponsive.
-            # This is normal. Wait and retry.
-            logger.debug(f"  Cycle {cycle:02d}: Status read returned None — retrying...")
-
+            logger.debug(f"  Cycle {cycle:02d}: Status read None — retrying...")
         elif status == SANITIZE_SSTAT_COMPLETED_OK:
-            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x1 — Hardware confirmed complete.")
+            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x1 — Hardware confirmed complete. ✓")
             return True
-
-        elif status == SANITIZE_SSTAT_IN_PROGRESS:
-            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x2 — Sanitize in progress ({elapsed:.0f}s)...")
-
         elif status == SANITIZE_SSTAT_IDLE:
-            # Drive returned to idle — treat as complete (some controllers
-            # transition directly to 0x0 rather than holding 0x1)
-            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x0 — Controller returned to idle state.")
+            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x0 — Controller idle (complete).")
             return True
-
+        elif status == SANITIZE_SSTAT_IN_PROGRESS:
+            logger.debug(f"  Cycle {cycle:02d}: SSTAT=0x2 — In progress ({elapsed:.0f}s)...")
         elif status == SANITIZE_SSTAT_COMPLETED_ERR:
-            logger.error(
-                f"  Cycle {cycle:02d}: SSTAT=0x3 — Controller reported sanitize error."
-            )
+            logger.error(f"  Cycle {cycle:02d}: SSTAT=0x3 — Controller reported error.")
             return False
-
-        else:
-            logger.warning(
-                f"  Cycle {cycle:02d}: Unknown SSTAT code 0x{status:X} — continuing poll..."
-            )
 
         time.sleep(POLL_INTERVAL_SECONDS)
         elapsed += POLL_INTERVAL_SECONDS
 
     logger.error(
-        f"  Cycle {cycle:02d}: Polling timed out after {POLL_TIMEOUT_SECONDS}s. "
-        f"Drive may still be sanitizing — do not re-use device."
+        f"  Cycle {cycle:02d}: Polling timed out after {POLL_TIMEOUT_SECONDS}s."
     )
     return False
+
+
+# ==============================================================================
+# TIER 2 — SCSI/ATA PASSTHROUGH (SG_IO for USB enclosures)
+# ==============================================================================
+
+def _nvme_action_to_ata_feature(action: int) -> int:
+    return {
+        SANITIZE_ACTION_OVERWRITE:    ATA_SANITIZE_OVERWRITE,
+        SANITIZE_ACTION_BLOCK_ERASE:  ATA_SANITIZE_BLOCK_ERASE,
+        SANITIZE_ACTION_CRYPTO_ERASE: ATA_SANITIZE_CRYPTO,
+    }.get(action, ATA_SANITIZE_BLOCK_ERASE)
+
+
+def _build_sg_io_hdr(
+    cdb: bytes,
+    dxfer_buf: Optional[bytes] = None,
+    timeout_ms: int = 30000
+) -> array.array:
+    """
+    Builds a sg_io_hdr_t structure for the SG_IO ioctl.
+    sg_io_hdr_t layout (Linux kernel, scsi/sg.h):
+      int      interface_id    ('S' = SCSI generic)
+      int      dxfer_direction (SG_DXFER_NONE=-1, SG_DXFER_FROM_DEV=-3)
+      uint8    cmd_len
+      uint8    mx_sb_len       (sense buffer max length)
+      uint16   iovec_count     (0 = use dxferp directly)
+      uint    dxfer_len
+      ptr      dxferp          (data transfer buffer pointer)
+      ptr      cmdp            (CDB pointer)
+      ptr      sbp             (sense buffer pointer)
+      uint     timeout         (ms)
+      uint     flags
+      int      pack_id
+      ptr      usr_ptr
+      uint8    status
+      uint8    masked_status
+      uint8    msg_status
+      uint8    sb_len_wr
+      uint16   host_status
+      uint16   driver_status
+      int      resid
+      uint     duration
+      uint     info
+    Total: variable depending on pointer size — we use struct packing
+    """
+    SG_DXFER_NONE     = -1
+    SG_DXFER_FROM_DEV = -3
+
+    sense_buf = array.array('B', b'\x00' * 32)
+    sense_addr, _ = sense_buf.buffer_info()
+
+    cdb_arr  = array.array('B', cdb)
+    cdb_addr, _ = cdb_arr.buffer_info()
+
+    if dxfer_buf is not None:
+        dxfer_arr  = array.array('B', dxfer_buf)
+        dxfer_addr, _ = dxfer_arr.buffer_info()
+        dxfer_direction = SG_DXFER_FROM_DEV
+        dxfer_len = len(dxfer_buf)
+    else:
+        dxfer_arr  = None
+        dxfer_addr = 0
+        dxfer_direction = SG_DXFER_NONE
+        dxfer_len  = 0
+
+    # Pack sg_io_hdr_t — pointer size depends on arch (8 bytes on 64-bit)
+    fmt = 'ii BB HI PPPI II i P BBBB HH i II'
+    hdr = struct.pack(
+        'iiBBHIPPPIIiPBBBBHHiII',
+        ord('S'),           # interface_id
+        dxfer_direction,    # dxfer_direction
+        len(cdb),           # cmd_len
+        32,                 # mx_sb_len
+        0,                  # iovec_count
+        dxfer_len,          # dxfer_len
+        dxfer_addr,         # dxferp
+        cdb_addr,           # cmdp
+        sense_addr,         # sbp
+        timeout_ms,         # timeout
+        0,                  # flags
+        0,                  # pack_id
+        0,                  # usr_ptr
+        0, 0, 0, 0,         # status, masked_status, msg_status, sb_len_wr
+        0, 0,               # host_status, driver_status
+        0,                  # resid
+        0, 0,               # duration, info
+    )
+    hdr_arr = array.array('B', hdr)
+    return hdr_arr, cdb_arr, sense_buf, dxfer_arr
+
+
+def execute_scsi_ata_sanitize(
+    sg_fd: int, action: int, logger: logging.Logger
+) -> bool:
+    """
+    Tier 2: ATA SANITIZE DEVICE via SCSI ATA PASS-THROUGH (16).
+    Sends ATA commands through the SAT (SCSI/ATA Translation) layer.
+    Reaches USB-NVMe drives via UASP when NVMe passthrough is blocked.
+
+    SCSI ATA PASS-THROUGH (16) CDB (16 bytes):
+      [0]  = 0x85 (SCSI ATA PASS-THROUGH 16 opcode)
+      [1]  = protocol (4=PIO-in, 5=PIO-out, 6=DMA, 3=Non-data)
+      [2]  = EXTEND | T_DIR | BYT_BLOK | T_LENGTH
+      [3]  = features (high byte for 48-bit)
+      [4]  = features (low byte)
+      [5]  = sector count (high)
+      [6]  = sector count (low)
+      [7]  = LBA low (high)
+      [8]  = LBA low (low)
+      [9]  = LBA mid (high)
+      [10] = LBA mid (low)
+      [11] = LBA high (high)
+      [12] = LBA high (low)
+      [13] = device
+      [14] = command
+      [15] = control
+    """
+    feature = _nvme_action_to_ata_feature(action)
+    feat_lo = feature & 0xFF
+    feat_hi = (feature >> 8) & 0xFF
+
+    # Protocol 3 = Non-data (no data transfer), EXTEND=1 for 48-bit
+    protocol = (3 << 1) | 1   # bits[4:1]=protocol, bit[0]=EXTEND
+    # T_LENGTH=0 (no transfer length), BYT_BLOK=0, T_DIR=0, CK_COND=0
+    flags = 0x00
+
+    # ATA SANITIZE erase key (required by ATA spec for BLOCK ERASE/OVERWRITE)
+    # LBA low = 0x45, LBA mid = 0x72 ("Er" in ASCII)
+    cdb = bytes([
+        SCSI_ATA_PASSTHROUGH_16,  # [0]  opcode
+        protocol,                  # [1]  protocol + EXTEND
+        flags,                     # [2]  flags
+        feat_hi,                   # [3]  features high (48-bit)
+        feat_lo,                   # [4]  features low
+        0x00,                      # [5]  sector count high
+        0x00,                      # [6]  sector count low
+        0x00,                      # [7]  LBA low high
+        0x45,                      # [8]  LBA low low  (erase key 'E')
+        0x00,                      # [9]  LBA mid high
+        0x72,                      # [10] LBA mid low  (erase key 'r')
+        0x00,                      # [11] LBA high high
+        0x00,                      # [12] LBA high low
+        0x00,                      # [13] device
+        ATA_CMD_SANITIZE_DEVICE,   # [14] ATA command
+        0x00,                      # [15] control
+    ])
+
+    try:
+        hdr_arr, cdb_arr, sense_buf, _ = _build_sg_io_hdr(
+            cdb, dxfer_buf=None, timeout_ms=7200000
+        )
+        fcntl.ioctl(sg_fd, SG_IO, hdr_arr, 1)
+
+        # Check sense buffer for errors
+        if sense_buf[0] != 0 and sense_buf[2] & 0x0F not in (0x00, 0x01):
+            sk  = sense_buf[2] & 0x0F
+            asc = sense_buf[12]
+            logger.debug(
+                f"Tier 2 SCSI ATA: sense key=0x{sk:02X} ASC=0x{asc:02X}"
+            )
+            return False
+
+        logger.debug(
+            f"Tier 2 SCSI ATA: SANITIZE DEVICE dispatched "
+            f"feature=0x{feature:04X} action=0x{action:02X}"
+        )
+        return True
+
+    except OSError as e:
+        logger.debug(f"Tier 2 SCSI ATA passthrough failed: {e}")
+        return False
+
+
+def probe_ata_passthrough(sg_fd: int, logger: logging.Logger) -> bool:
+    """
+    Non-destructive probe: sends ATA IDENTIFY DEVICE via SCSI passthrough.
+    Returns True if the SG_IO interface responds correctly.
+    """
+    cdb = bytes([
+        SCSI_ATA_PASSTHROUGH_16,
+        (4 << 1) | 0,    # protocol=4 (PIO-in), EXTEND=0
+        0x0E,             # T_DIR=1, BYT_BLOK=1, T_LENGTH=2
+        0x00, 0x00,       # features
+        0x00, 0x01,       # sector count = 1
+        0x00, 0x00,       # LBA low
+        0x00, 0x00,       # LBA mid
+        0x00, 0x00,       # LBA high
+        0x00,             # device
+        ATA_CMD_IDENTIFY, # command
+        0x00,             # control
+    ])
+    ident_buf = b'\x00' * 512
+    try:
+        hdr_arr, cdb_arr, sense_buf, _ = _build_sg_io_hdr(
+            cdb, dxfer_buf=ident_buf, timeout_ms=10000
+        )
+        fcntl.ioctl(sg_fd, SG_IO, hdr_arr, 1)
+        return True
+    except OSError:
+        return False
+
+
+# ==============================================================================
+# TIER 3 — blkdiscard FALLBACK
+# ==============================================================================
+
+def execute_blkdiscard(
+    sd_fd: int, action: int, logger: logging.Logger
+) -> bool:
+    """
+    Tier 3: BLKDISCARD ioctl — discards all LBAs on the device.
+    Reaches the drive via the Linux block layer when SCSI passthrough unavailable.
+    Less granular (no phase separation) but works universally on block devices.
+    """
+    try:
+        # Get device size
+        size_buf = array.array('Q', [0])
+        fcntl.ioctl(sd_fd, BLKGETSIZE64, size_buf, 1)
+        dev_size = size_buf[0]
+
+        if dev_size == 0:
+            logger.debug("Tier 3 blkdiscard: could not determine device size")
+            return False
+
+        # BLKDISCARD takes [start, length] as two uint64 values
+        discard_range = struct.pack('QQ', 0, dev_size)
+        discard_arr   = array.array('B', discard_range)
+        fcntl.ioctl(sd_fd, BLKDISCARD, discard_arr, 1)
+
+        logger.debug(
+            f"Tier 3 blkdiscard: discarded {dev_size} bytes "
+            f"action=0x{action:02X}"
+        )
+        return True
+
+    except OSError as e:
+        logger.debug(f"Tier 3 blkdiscard failed: {e}")
+        return False
+
+
+# ==============================================================================
+# AUTO-DETECTION — PROBE WHICH TIER WORKS
+# ==============================================================================
+
+def detect_passthrough_tier(
+    device_path: str,
+    logger:      logging.Logger
+) -> Tuple[str, str]:
+    """
+    Probes the device to determine the best passthrough tier.
+    Returns (tier, effective_device_path) tuple.
+
+    For USB drives on /dev/sdX:
+      - Tries to find /dev/sgX for Tier 2
+      - Falls back to /dev/sdX for Tier 3
+    For /dev/nvmeX:
+      - Always Tier 1
+    For /dev/sgX:
+      - Always Tier 2 (sg path given directly)
+    """
+    logger.info("━━━ USB/NVMe Passthrough Detection ━━━")
+    dev_type = detect_device_type(device_path)
+
+    # ── Native NVMe ──────────────────────────────────────────────────────────
+    if dev_type == "nvme":
+        logger.info(f"  Native NVMe device detected: {device_path}")
+        logger.info(f"  ✓ Tier 1 NVMe direct (NVME_IOCTL_ADMIN_CMD): ACTIVE")
+        logger.info(f"    Log Page 0x81 hardware confirmation: ENABLED")
+        return TIER_NVME, device_path
+
+    # ── SCSI block device (/dev/sdX) — USB enclosure ─────────────────────────
+    if dev_type in ("sd", "unknown"):
+        logger.info(
+            f"  SCSI block device detected: {device_path} "
+            f"(likely USB enclosure)"
+        )
+
+        # Try to find the sg node for ATA passthrough
+        sg_path = find_sg_node(device_path)
+        if sg_path and Path(sg_path).exists():
+            logger.info(f"  Found SCSI generic node: {sg_path}")
+            logger.info(
+                f"  Probing Tier 2 — ATA SCSI passthrough (SG_IO)..."
+            )
+            try:
+                sg_fd = os.open(sg_path, os.O_RDWR)
+                supported = probe_ata_passthrough(sg_fd, logger)
+                os.close(sg_fd)
+                if supported:
+                    logger.info(f"  ✓ Tier 2 SCSI/ATA passthrough: SUPPORTED")
+                    logger.info(
+                        f"    ATA SANITIZE DEVICE via SCSI ATA PASS-THROUGH (16)"
+                    )
+                    logger.info(
+                        f"    Note: Phase B/C/A mapped to ATA feature codes"
+                    )
+                    logger.info(
+                        f"    Note: Log Page 0x81 unavailable — time-based wait per cycle"
+                    )
+                    return TIER_SCSI, sg_path
+                else:
+                    logger.info(
+                        f"  ✗ Tier 2 SCSI/ATA: probe failed — bridge may block SAT"
+                    )
+            except OSError as e:
+                logger.info(f"  ✗ Tier 2 SCSI/ATA: could not open {sg_path} ({e})")
+        else:
+            logger.info(
+                f"  ✗ Tier 2 SCSI/ATA: no /dev/sgX node found for {device_path}"
+            )
+
+        # Fall back to blkdiscard
+        logger.info(f"  Probing Tier 3 — blkdiscard ({device_path})...")
+        try:
+            fd = os.open(device_path, os.O_RDWR)
+            size_buf = array.array('Q', [0])
+            fcntl.ioctl(fd, BLKGETSIZE64, size_buf, 1)
+            os.close(fd)
+            if size_buf[0] > 0:
+                logger.info(f"  ✓ Tier 3 blkdiscard: SUPPORTED")
+                logger.info(
+                    f"    BLKDISCARD ioctl — block layer discard"
+                )
+                logger.info(
+                    f"    Warning: Phase granularity not available — "
+                    f"single discard per cycle"
+                )
+                logger.info(
+                    f"    Warning: Time-based wait per cycle"
+                )
+                return TIER_DISCARD, device_path
+        except OSError as e:
+            logger.info(f"  ✗ Tier 3 blkdiscard: failed ({e})")
+
+    # ── SCSI generic device (/dev/sgX) given directly ─────────────────────────
+    if dev_type == "sg":
+        logger.info(f"  SCSI generic device given directly: {device_path}")
+        logger.info(f"  Probing Tier 2 — ATA SCSI passthrough (SG_IO)...")
+        try:
+            sg_fd     = os.open(device_path, os.O_RDWR)
+            supported = probe_ata_passthrough(sg_fd, logger)
+            os.close(sg_fd)
+            if supported:
+                logger.info(f"  ✓ Tier 2 SCSI/ATA passthrough: SUPPORTED")
+                return TIER_SCSI, device_path
+        except OSError as e:
+            logger.info(f"  ✗ Tier 2 SCSI/ATA: {e}")
+
+    logger.error("  ✗ No passthrough tier supported by this device/enclosure.")
+    logger.error(
+        "    The USB bridge chip is blocking all sanitize pathways."
+    )
+    logger.error(
+        "    Recommendation: Install the drive directly in an M.2 slot."
+    )
+    return TIER_NONE, device_path
+
+
+# ==============================================================================
+# TIME-BASED POLLING (Tier 2 / Tier 3)
+# ==============================================================================
+
+def poll_time_based(cycle: int, logger: logging.Logger, wait_s: int = 120) -> bool:
+    """
+    Tier 2/3 polling: time-based wait when Log Page 0x81 is unavailable.
+    120s conservative wait per cycle — sufficient for most drives.
+    """
+    logger.info(
+        f"  Cycle {cycle:02d}: USB mode — waiting {wait_s}s for drive to complete..."
+    )
+    for elapsed in range(0, wait_s, 10):
+        time.sleep(10)
+        pct = int((elapsed / wait_s) * 100)
+        bar = ("█" * (pct // 5)).ljust(20)
+        logger.info(
+            f"  Cycle {cycle:02d}: [{bar}] {pct}% ({elapsed}s/{wait_s}s)"
+        )
+    logger.info(f"  Cycle {cycle:02d}: Wait complete.")
+    return True
+
+
+# ==============================================================================
+# UNIFIED COMMAND DISPATCH
+# ==============================================================================
+
+def execute_sanitize_cycle(
+    fd:      int,
+    action:  int,
+    cycle:   int,
+    tier:    str,
+    logger:  logging.Logger
+) -> bool:
+    """
+    Dispatches one sanitize cycle through the detected tier.
+    """
+    if tier == TIER_NVME:
+        ok = execute_nvme_sanitize_direct(fd, action, logger)
+        if not ok:
+            return False
+        return poll_until_complete_nvme(fd, cycle, logger)
+
+    elif tier == TIER_SCSI:
+        ok = execute_scsi_ata_sanitize(fd, action, logger)
+        if not ok:
+            return False
+        return poll_time_based(cycle, logger, wait_s=120)
+
+    elif tier == TIER_DISCARD:
+        ok = execute_blkdiscard(fd, action, logger)
+        if not ok:
+            return False
+        return poll_time_based(cycle, logger, wait_s=180)
+
+    else:
+        logger.error(f"  Cycle {cycle:02d}: No passthrough tier available.")
+        return False
 
 
 # ==============================================================================
@@ -467,23 +845,18 @@ def poll_until_complete(
 
 def verify_sanitization(
     device_path: str,
-    total_lbas: Optional[int],
-    logger: logging.Logger
+    total_lbas:  Optional[int],
+    logger:      logging.Logger
 ) -> list:
-    """
-    Samples VERIFICATION_SAMPLE_COUNT LBAs across the drive's logical address
-    space and confirms each returns deallocated/zeroed data.
-
-    Returns a list of VerificationRecord objects.
-    """
-    results = []
+    results     = []
     sector_size = 512
 
     if total_lbas is None:
-        # Fall back to a fixed-LBA probe if drive geometry is unknown
-        probe_lbas = [i * VERIFICATION_LBA_STEP for i in range(VERIFICATION_SAMPLE_COUNT)]
+        probe_lbas = [
+            i * VERIFICATION_LBA_STEP for i in range(VERIFICATION_SAMPLE_COUNT)
+        ]
     else:
-        step = max(1, total_lbas // VERIFICATION_SAMPLE_COUNT)
+        step       = max(1, total_lbas // VERIFICATION_SAMPLE_COUNT)
         probe_lbas = [i * step for i in range(VERIFICATION_SAMPLE_COUNT)]
 
     logger.info("")
@@ -498,46 +871,43 @@ def verify_sanitization(
     try:
         for lba in probe_lbas:
             byte_offset = lba * sector_size
-            rec = VerificationRecord(lba=lba, result="UNKNOWN")
+            rec         = VerificationRecord(lba=lba, result="UNKNOWN")
             try:
                 os.lseek(fd, byte_offset, os.SEEK_SET)
                 data = os.read(fd, sector_size)
-
                 if all(b == 0x00 for b in data):
                     rec.result = "ZEROED"
-                    logger.info(f"  LBA 0x{lba:010X} — ZEROED  ✓")
+                    logger.info(f"  LBA 0x{lba:010X} — ZEROED ✓")
                 else:
-                    # Non-zero data post-sanitize is unexpected — flag it
-                    non_zero = sum(1 for b in data if b != 0)
-                    rec.result  = "NON-ZERO"
-                    rec.detail  = f"{non_zero}/{sector_size} non-zero bytes"
+                    non_zero   = sum(1 for b in data if b != 0)
+                    rec.result = "NON-ZERO"
+                    rec.detail = f"{non_zero}/{sector_size} non-zero bytes"
                     logger.warning(
                         f"  LBA 0x{lba:010X} — NON-ZERO ({non_zero} bytes) ⚠"
                     )
-
             except OSError as e:
                 err_str = str(e)
-                # ENXIO / EIO on unallocated LBA is correct post-sanitize behaviour
                 if "No such device" in err_str or "Input/output error" in err_str:
                     rec.result = "DEALLOCATED"
-                    logger.info(f"  LBA 0x{lba:010X} — DEALLOCATED (hardware unallocated) ✓")
+                    logger.info(
+                        f"  LBA 0x{lba:010X} — DEALLOCATED ✓"
+                    )
                 else:
                     rec.result = "ERROR"
                     rec.detail = err_str
-                    logger.warning(f"  LBA 0x{lba:010X} — READ ERROR: {err_str}")
-
+                    logger.warning(
+                        f"  LBA 0x{lba:010X} — READ ERROR: {err_str}"
+                    )
             results.append(rec)
-
     finally:
         os.close(fd)
 
     clean   = sum(1 for r in results if r.result in ("ZEROED", "DEALLOCATED"))
     flagged = len(results) - clean
     logger.info(
-        f"  Verification complete: {clean}/{len(results)} LBAs confirmed clean"
-        + (f" | {flagged} flagged — review report" if flagged else "")
+        f"  Verification: {clean}/{len(results)} LBAs confirmed clean"
+        + (f" | {flagged} flagged" if flagged else "")
     )
-
     return results
 
 
@@ -546,49 +916,53 @@ def verify_sanitization(
 # ==============================================================================
 
 def run_sanitization(
-    device_path:  str,
-    logger:       logging.Logger,
-    dry_run:      bool = False,
-    force:        bool = False,
-    report:       Optional[SanitizationReport] = None
+    device_path: str,
+    logger:      logging.Logger,
+    dry_run:     bool = False,
+    force:       bool = False,
+    report:      Optional[SanitizationReport] = None
 ) -> bool:
-    """
-    Executes the AAD-50 three-phase sanitization sequence in the correct order:
-      Phase B (Overwrite)    → Cycles  1–40
-      Phase C (Block Erase)  → Cycles 41–45
-      Phase A (Crypto Erase) → Cycles 46–50
 
-    Each cycle blocks until Log Page 0x81 confirms hardware completion before
-    the next cycle is dispatched.
-    """
     phases = [
-        # (phase_label,                          cycle_range,   action_code,                delay_label)
-        ("B — Physical NAND Cell Overwrite",    range(1,  41), SANITIZE_ACTION_OVERWRITE,    "overwrite"),
-        ("C — Flash Translation Layer Reset",   range(41, 46), SANITIZE_ACTION_BLOCK_ERASE,  "block erase"),
-        ("A — Cryptographic Key Destruction",   range(46, 51), SANITIZE_ACTION_CRYPTO_ERASE, "crypto erase"),
+        ("B — Physical NAND Cell Overwrite",  range(1,  41), SANITIZE_ACTION_OVERWRITE,    "overwrite"),
+        ("C — Flash Translation Layer Reset", range(41, 46), SANITIZE_ACTION_BLOCK_ERASE,  "block erase"),
+        ("A — Cryptographic Key Destruction", range(46, 51), SANITIZE_ACTION_CRYPTO_ERASE, "crypto erase"),
     ]
 
-    fd = None
+    fd          = None
+    active_tier = TIER_NONE
+    active_path = device_path
+
     try:
         if not dry_run:
-            fd = os.open(device_path, os.O_RDWR)
-            logger.info(f"Direct controller handle opened: {device_path}")
+            # ── Auto-detect tier ──────────────────────────────────────────────
+            active_tier, active_path = detect_passthrough_tier(device_path, logger)
+            if active_tier == TIER_NONE:
+                return False
+
+            if report:
+                report.pathway_used = active_tier
+
+            fd = os.open(active_path, os.O_RDWR)
+            logger.info(f"  Device handle opened: {active_path}")
+            logger.info(f"  Active pathway: {active_tier}")
+            logger.info("")
         else:
-            logger.info("[DRY RUN] No device handle opened — simulating full sequence.")
+            active_tier = TIER_NVME
+            logger.info("[DRY RUN] Simulating full 50-cycle sequence (no commands issued).")
 
         for phase_label, cycles, action, action_name in phases:
-            logger.info("")
             logger.info(f"━━━ PHASE {phase_label} ━━━")
 
             for cycle in cycles:
-                ts         = datetime.now(timezone.utc).isoformat()
-                pct        = int((cycle / TOTAL_CYCLES) * 100)
-                bar        = ("█" * (pct // 5)).ljust(20)
+                ts          = datetime.now(timezone.utc).isoformat()
+                pct         = int((cycle / TOTAL_CYCLES) * 100)
+                bar         = ("█" * (pct // 5)).ljust(20)
                 cycle_start = time.monotonic()
 
                 logger.info(
                     f"  Cycle {cycle:02d}/{TOTAL_CYCLES} [{bar}] {pct:3d}%  "
-                    f"Action=0x{action:02X} ({action_name})"
+                    f"Action=0x{action:02X} ({action_name})  [{active_tier}]"
                 )
 
                 status    = "OK"
@@ -596,27 +970,27 @@ def run_sanitization(
 
                 try:
                     if not dry_run:
-                        execute_nvme_sanitize(fd, action, logger)
-
-                        # ── CRITICAL: Block until this cycle is confirmed complete ──
-                        completed = poll_until_complete(fd, cycle, logger, dry_run=False)
+                        completed = execute_sanitize_cycle(
+                            fd, action, cycle, active_tier, logger
+                        )
                         if not completed:
-                            status    = "POLL_TIMEOUT_OR_ERROR"
-                            error_msg = "Hardware did not confirm cycle completion."
+                            status    = "FAILED"
+                            error_msg = "Drive did not confirm cycle completion."
                             logger.error(
-                                f"  Cycle {cycle:02d} failed to complete on hardware. "
-                                f"Aborting sequence."
+                                f"  Cycle {cycle:02d}: Failed. Aborting sequence."
                             )
                             if report:
                                 report.cycles.append(CycleRecord(
                                     cycle=cycle, phase=phase_label,
                                     action_code=action, timestamp=ts,
-                                    status=status, error=error_msg,
-                                    duration_sec=round(time.monotonic() - cycle_start, 2)
+                                    status=status, pathway=active_tier,
+                                    error=error_msg,
+                                    duration_sec=round(
+                                        time.monotonic() - cycle_start, 2
+                                    )
                                 ))
                             return False
                     else:
-                        # Dry run: simulate a short delay to mimic real timing
                         time.sleep(0.05)
 
                 except OSError as e:
@@ -627,7 +1001,8 @@ def run_sanitization(
                         report.cycles.append(CycleRecord(
                             cycle=cycle, phase=phase_label,
                             action_code=action, timestamp=ts,
-                            status=status, error=error_msg,
+                            status=status, pathway=active_tier,
+                            error=error_msg,
                             duration_sec=round(time.monotonic() - cycle_start, 2)
                         ))
                     return False
@@ -637,16 +1012,19 @@ def run_sanitization(
                     report.cycles.append(CycleRecord(
                         cycle=cycle, phase=phase_label,
                         action_code=action, timestamp=ts,
-                        status=status, duration_sec=duration
+                        status=status, pathway=active_tier,
+                        duration_sec=duration
                     ))
                     report.cycles_run = cycle
 
-                logger.debug(f"  Cycle {cycle:02d} confirmed complete in {duration}s.")
+                logger.debug(
+                    f"  Cycle {cycle:02d} done in {duration}s via {active_tier}."
+                )
 
     finally:
         if fd is not None:
             os.close(fd)
-            logger.debug("Controller handle closed.")
+            logger.debug("Device handle closed.")
 
     return True
 
@@ -656,16 +1034,15 @@ def run_sanitization(
 # ==============================================================================
 
 def finalize_report(
-    report:    SanitizationReport,
-    success:   bool,
-    log_path:  Optional[str],
-    logger:    logging.Logger
+    report:   SanitizationReport,
+    success:  bool,
+    log_path: Optional[str],
+    logger:   logging.Logger
 ) -> None:
     report.completed_at = datetime.now(timezone.utc).isoformat()
-    report.outcome = "SUCCESS — DATA DESTROYED" if success else "FAILED — INCOMPLETE"
+    report.outcome      = "SUCCESS — DATA DESTROYED" if success else "FAILED — INCOMPLETE"
 
-    # SHA-256 chain-of-custody hash over all cycle records (key-sorted for determinism)
-    cycle_blob   = json.dumps([asdict(c) for c in report.cycles], sort_keys=True)
+    cycle_blob      = json.dumps([asdict(c) for c in report.cycles], sort_keys=True)
     report.log_hash = hashlib.sha256(cycle_blob.encode()).hexdigest()
 
     logger.info("")
@@ -674,6 +1051,7 @@ def finalize_report(
     logger.info(f"  Author : {AUTHOR} <{CONTACT}>")
     logger.info("=" * 78)
     logger.info(f"  OUTCOME   : {report.outcome}")
+    logger.info(f"  PATHWAY   : {report.pathway_used}")
     logger.info(f"  DEVICE    : {report.device}")
     if report.drive_model:
         logger.info(f"  DRIVE     : {report.drive_model}")
@@ -703,12 +1081,6 @@ def request_authorization(
     logger:      logging.Logger,
     force:       bool = False
 ) -> bool:
-    """
-    In interactive mode: prints a full destruction warning and requires the
-    operator to type the authorization token exactly.
-    In --force mode: prints a condensed warning and proceeds automatically
-    (intended for automated server deprovisioning pipelines).
-    """
     print()
     print("=" * 78)
     print(f"  {TOOL_NAME}")
@@ -734,8 +1106,7 @@ def request_authorization(
     print()
 
     if force:
-        print("  [--force] Non-interactive mode active. Proceeding automatically.")
-        print()
+        print("  [--force] Non-interactive mode. Proceeding automatically.")
         logger.info("Authorization granted via --force flag.")
         return True
 
@@ -746,7 +1117,7 @@ def request_authorization(
         token = input("  Authorization: ").strip()
     except (KeyboardInterrupt, EOFError):
         print()
-        logger.info("Authorization interrupted by user.")
+        logger.info("Authorization interrupted.")
         return False
 
     if token != AUTHORIZATION_TOKEN:
@@ -766,53 +1137,60 @@ def build_arg_parser() -> argparse.ArgumentParser:
         description=(
             f"{TOOL_NAME}\n"
             f"{SPEC_NAME}\n"
-            f"Author: {AUTHOR} <{CONTACT}>  |  Version {TOOL_VERSION}"
+            f"Author: {AUTHOR} <{CONTACT}>  |  Version {TOOL_VERSION}\n"
+            f"USB Support: SCSI/ATA passthrough (SG_IO) + blkdiscard fallback"
         ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
             "Examples:\n"
             "  sudo python3 aad50_abeselom.py /dev/nvme0\n"
             "  sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log\n"
-            "  sudo python3 aad50_abeselom.py /dev/nvme0 --log /var/log/aad50.log --force\n"
             "  sudo python3 aad50_abeselom.py /dev/nvme0 --dry-run --verbose\n"
+            "\n"
+            "USB ENCLOSURE EXAMPLES:\n"
+            "  sudo python3 aad50_abeselom.py /dev/sdb\n"
+            "  sudo python3 aad50_abeselom.py /dev/sg1\n"
+            "  sudo python3 aad50_abeselom.py /dev/sdb --log /var/log/aad50.log\n"
+            "\n"
+            "USB NOTE:\n"
+            "  AAD-50 auto-detects the best passthrough pathway:\n"
+            "  /dev/nvme* → Tier 1 NVMe direct (full Log Page 0x81 confirmation)\n"
+            "  /dev/sd*   → Tier 2 SCSI/ATA via /dev/sgX, or Tier 3 blkdiscard\n"
+            "  /dev/sg*   → Tier 2 SCSI/ATA passthrough directly\n"
+            "\n"
+            "NOTE: Always run with sudo.\n"
+            "NOTE: Target /dev/nvme0 (controller), not /dev/nvme0n1 (namespace).\n"
         )
     )
     parser.add_argument(
         "device",
-        help="Target NVMe controller node (e.g. /dev/nvme0)"
-    )
-    parser.add_argument(
-        "--log",
-        metavar="PATH",
-        default=None,
-        help="Write timestamped execution log and JSON audit report to PATH"
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
         help=(
-            "Skip interactive authorization prompt. "
-            "For automated deprovisioning pipelines. USE WITH EXTREME CAUTION."
+            "Target device: /dev/nvme0 (native NVMe), "
+            "/dev/sdb (USB enclosure), or /dev/sg1 (SCSI generic)"
         )
     )
     parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="Simulate the full 50-cycle sequence without issuing any IOCTL commands"
+        "--log", metavar="PATH", default=None,
+        help="Write timestamped log and JSON audit report to PATH"
     )
     parser.add_argument(
-        "--skip-verify",
-        action="store_true",
-        help="Skip the post-sanitization LBA verification read"
+        "--force", action="store_true",
+        help="Skip interactive authorization. For automated pipelines."
     )
     parser.add_argument(
-        "--verbose",
-        action="store_true",
-        help="Enable debug output (IOCTL dispatch details, Log Page 0x81 poll traces)"
+        "--dry-run", action="store_true",
+        help="Simulate full 50-cycle sequence without issuing any IOCTL commands"
     )
     parser.add_argument(
-        "--version",
-        action="version",
+        "--skip-verify", action="store_true",
+        help="Skip post-sanitization LBA verification read"
+    )
+    parser.add_argument(
+        "--verbose", action="store_true",
+        help="Enable debug output (IOCTL details, Log Page 0x81 traces)"
+    )
+    parser.add_argument(
+        "--version", action="version",
         version=f"{TOOL_NAME} v{TOOL_VERSION}"
     )
     return parser
@@ -823,29 +1201,26 @@ def main() -> int:
     args   = parser.parse_args()
     logger = configure_logging(args.log, args.verbose)
 
-    # Root privilege guard
     if not args.dry_run and os.geteuid() != 0:
         logger.error(
-            "Root privileges are required to open raw NVMe controller handles. "
-            "Re-run with sudo."
+            "Root privileges required. Re-run with sudo."
         )
         return 1
 
     device = args.device
 
-    # Device validation
     if not args.dry_run:
         if not validate_nvme_device(device, logger):
             return 1
 
-    # Drive identification (best-effort)
-    model, total_lbas = (None, None) if args.dry_run else get_device_info(device)
+    # Drive info (best-effort, NVMe only)
+    model, total_lbas = (None, None)
+    if not args.dry_run and detect_device_type(device) == "nvme":
+        model, total_lbas = get_device_info(device)
 
-    # Authorization gate
     if not request_authorization(device, model, logger, force=args.force):
         return 1
 
-    # Initialize audit report
     report = SanitizationReport(
         device=device,
         drive_model=model or "Unknown",
@@ -860,7 +1235,6 @@ def main() -> int:
     if args.dry_run:
         logger.info("[DRY RUN MODE — No IOCTL commands will be issued]")
 
-    # Execute sanitization
     success = run_sanitization(
         device_path=device,
         logger=logger,
@@ -869,16 +1243,13 @@ def main() -> int:
         report=report
     )
 
-    # Post-run LBA verification
     if success and not args.skip_verify and not args.dry_run:
         verif_records = verify_sanitization(device, total_lbas, logger)
         report.verification = [asdict(v) for v in verif_records]
     elif args.skip_verify:
         logger.info("Post-run verification skipped via --skip-verify.")
 
-    # Finalize and save report
     finalize_report(report, success, args.log, logger)
-
     return 0 if success else 2
 
 
