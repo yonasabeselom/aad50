@@ -317,7 +317,7 @@ A complete step-by-step user manual for the Windows GUI application:
 
 📖 **[AAD50_User_Manual.pdf](./AAD50_User_Manual.pdf)**
 
-Covers installation, all five screens, dry-run simulation, live sanitization, audit reports, PDF certificate generation, troubleshooting, and safety warnings. Designed for both technical and non-technical users.
+Covers installation, all five screens, dry-run simulation, live sanitization, USB enclosure support and three-tier passthrough detection, audit reports, PDF certificate generation, troubleshooting, and safety warnings. Designed for both technical and non-technical users. Updated to v1.1.
 
 ---
 
