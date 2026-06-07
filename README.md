@@ -103,7 +103,7 @@ AAD-50 is available as a reference implementation on both **Linux** and **Window
 |---|---|---|---|
 | `aad50_abeselom.py` | Linux 5.15+ | `nvme_admin_cmd` IOCTL — 3-tier USB/NVMe auto-detect | Stable v1.1 |
 | `aad50_abeselom_windows.py` | Windows 10 1607+ / 11 | `DeviceIoControl` — 3-tier USB/NVMe auto-detect | Beta v1.1 |
-| `aad50_gui_windows.py` | Windows 10 1607+ / 11 | GUI — requires `aad50_abeselom_windows.py` | Beta |
+| `aad50_gui_windows.py` | Windows 10 1607+ / 11 | GUI — requires `aad50_abeselom_windows.py` | Beta v1.1 |
 
 > **Linux v1.1 — USB Enclosure Support:** The Linux implementation now includes three-tier passthrough auto-detection. Point AAD-50 at `/dev/sdb` (USB block device) or `/dev/sg1` (SCSI generic) and it automatically probes Tier 1 (NVMe direct), Tier 2 (ATA SANITIZE via SG_IO/SAT), and Tier 3 (BLKDISCARD). The active pathway is recorded in the audit report.
 
