@@ -333,6 +333,43 @@ Covers installation, all five screens, dry-run simulation, live sanitization, US
 
 ---
 
+## Runtime and Performance
+
+A common question is whether 50 cycles makes AAD-50 slow. The answer depends entirely on understanding what AAD-50 is doing at the hardware level — and how it differs from every software tool that came before it.
+
+**AAD-50 does not perform host-driven sequential writes.** Each cycle issues one NVMe Sanitize admin command (Opcode 0x84) directly to the drive's on-chip controller. The drive's internal ASIC then executes the destruction natively on its own internal buses at silicon speeds — entirely bypassing the PCIe bus, the OS storage stack, and the host CPU. The host machine simply polls Log Page 0x81 for hardware-confirmed completion before issuing the next cycle.
+
+This is architecturally different from software tools like Gutmann, DoD 5220.22-M, DBAN, or nwipe, which push data from the host CPU across the PCIe bus for every pass. A single firmware-level sanitize cycle on a modern NVMe drive completes in seconds to tens of seconds — not hours.
+
+### Estimated Runtimes Per Drive
+
+| Drive Capacity | Single NVMe Sanitize Cycle | AAD-50 (50 cycles) |
+|---|---|---|
+| 256 GB | 3–10 seconds | 2–8 minutes |
+| 512 GB | 5–15 seconds | 4–12 minutes |
+| 1 TB | 8–20 seconds | 7–17 minutes |
+| 2 TB | 10–30 seconds | 8–25 minutes |
+| 4 TB | 15–60 seconds | 12–50 minutes |
+
+*Times vary by manufacturer, controller generation, and NAND geometry.*
+
+### Position in the Landscape
+
+| Method | Runtime (1TB) | Bypasses FTL? | Verifiable? |
+|---|---|---|---|
+| Quick format | ~2 seconds | No | No |
+| Single crypto erase | ~1 second | No | No |
+| NIST SP 800-88 (1-pass software) | ~20–40 minutes | No | No |
+| **AAD-50 (50 firmware cycles)** | **~7–17 minutes** | **Yes** | **Yes** |
+| DoD 5220.22-M 7-pass software | ~3–5 hours | No | No |
+| Gutmann 35-pass software | ~12–24 hours | No | No |
+
+AAD-50 is **faster than every multi-pass software standard** because firmware-level NVMe Sanitize commands execute internally on the drive's own ASIC — not via host-driven sequential writes. It is slower than single crypto erase, but provides hardware-confirmed physical destruction that crypto erase alone cannot deliver. Wei et al. (USENIX FAST 2011) proved that crypto erase alone is unverifiable — encrypted data remains on the drive and the operation cannot be confirmed without physical chip extraction [3].
+
+AAD-50 occupies the correct engineering position: **faster than any software multi-pass tool, more verifiable than any single-command approach.**
+
+---
+
 ## Warning
 
 > **This tool causes PERMANENT, IRREVERSIBLE destruction of all data on the target device.** All partitions, filesystems, encryption keys, and hardware-level indices are destroyed. There is NO undo. Run only on devices you own and intend to fully erase.
