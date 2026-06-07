@@ -48,7 +48,7 @@ README.md, and all specification documentation in this repository)
 ================================================================================
 PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
 (Applies to: aad50_abeselom.py, aad50_abeselom_windows.py,
-aad50_gui_windows.py, and all Python source files in this repository)
+aad50_gui_windows.py, AAD50.exe, and all Python source files in this repository)
 ================================================================================
 
 PROPRIETARY LICENCE — ALL RIGHTS RESERVED
@@ -214,7 +214,7 @@ If you reference AAD-50 in academic or technical work, please cite as:
 
   Y. Abeselom, "The Abeselom ASIC-Direct 50 (AAD-50): A Firmware-Enforced,
   50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
-  Version 1.0, June 2026.
+  Version 1.1, June 2026.
   [Online]. Available: https://github.com/yonasabeselom/aad50
 
 ================================================================================
