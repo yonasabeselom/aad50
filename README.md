@@ -4,6 +4,28 @@
   <img src="AAD50_Logo.png" alt="AAD-50 Official Logo" width="600"/>
 </p>
 
+<p align="center">
+  <a href="https://github.com/yonasabeselom/aad50/stargazers">
+    <img src="https://img.shields.io/github/stars/yonasabeselom/aad50?style=social" alt="GitHub Stars"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/network/members">
+    <img src="https://img.shields.io/github/forks/yonasabeselom/aad50?style=social" alt="GitHub Forks"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/watchers">
+    <img src="https://img.shields.io/github/watchers/yonasabeselom/aad50?style=social" alt="GitHub Watchers"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/releases">
+    <img src="https://img.shields.io/github/v/release/yonasabeselom/aad50" alt="Latest Release"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
+    <img src="https://img.shields.io/badge/licence-Proprietary-red" alt="Licence"/>
+  </a>
+</p>
+
+<p align="center">
+  <b>⭐ If AAD-50 is useful to you, please star this repository — it helps other security professionals find it.</b>
+</p>
+
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
