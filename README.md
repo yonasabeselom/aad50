@@ -63,6 +63,13 @@ Traditional data sanitization standards (DoD 5220.22-M, Gutmann 35-pass) were en
 - **94%** of organisations believe their devices are fully sanitised — but the evidence proves this confidence is misplaced *(Blancco, 2026)*
 - **75%** of organisations undergoing audits will require auditable sanitisation logs by 2026 *(Gartner)*
 
+**The peer-reviewed research timeline is unambiguous:**
+
+- **Wei et al. (USENIX FAST 2011)** — Tested 15 sanitization protocols on real SSDs. Every single one failed. Recovered between 40MB and 1GB of data from a 1GB test file using every protocol — including DoD 5220.22-M, Gutmann 35-pass, British HMG IS5, German VSITR, and Mac OS X Secure Erase. Concluded that reliable SSD sanitization requires built-in, **verifiable** sanitize operations.
+- **Hasan and Ray (USENIX Security 2020)** — Proved that data is **partially or completely recoverable** from NAND flash even after digital sanitization ("scrubbing"). Exploited the analog threshold voltage distribution of flash cells — residual electrical charge that persists even after a digital erase. Demonstrated recovery using **standard digital interfaces** with no exotic hardware. Concluded that analog sanitization through multiple overwrite cycles is essential for true data destruction.
+
+These two independent peer-reviewed studies, published nine years apart at the most prestigious security conferences in the world, reach the same conclusion: **single-pass digital sanitization is insufficient.** AAD-50 is the first open, deployable protocol designed to address both findings simultaneously.
+
 The Flash Translation Layer (FTL) constantly intercepts host writes and redirects data to fresh physical blocks. When standard software attempts to overwrite a drive, the target data is not destroyed — it is merely unmapped. The original data remains fully intact in:
 
 - **Over-provisioned zones** — 7%–27% of raw capacity, completely invisible to the OS
