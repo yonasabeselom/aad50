@@ -391,6 +391,24 @@ Key notes:
 
 ---
 
+## Attribution and Prior Art
+
+The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe sanitization concept were first proposed publicly by **Yonas Abeselom** in:
+
+- **AAD-50 v1.0** — published June 2026 at https://github.com/yonasabeselom/aad50
+- **RFC #3415** — opened June 2, 2026 on linux-nvme/nvme-cli: https://github.com/linux-nvme/nvme-cli/issues/3415
+
+**June 9, 2026 — Milestone:** Following the RFC #3415 discussion, nvme-cli contributor **ikegami-t** confirmed intent to implement a `--repeat N` flag with per-cycle SSTAT verification natively in nvme-cli:
+
+> *"Thanks for the confirmation and explanation. Understood the situation. Later I will do try to add the repeat option."*
+> — ikegami-t, nvme-cli Contributor, June 9, 2026
+
+This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
+
+**Archived record:** https://github.com/linux-nvme/nvme-cli/issues/3415
+
+---
+
 ## Whitepaper
 
 The full technical whitepaper — formatted to IEEE double-column standard — is available in this repository:
