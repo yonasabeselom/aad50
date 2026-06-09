@@ -76,7 +76,7 @@ The Flash Translation Layer (FTL) constantly intercepts host writes and redirect
 - **Retired bad blocks** — degraded cells isolated by the FTL but never erased
 - **Wear-levelling pools** — historical data preserved across charge-trap nitride layers
 
-Recovering this data via direct threshold voltage analysis using the drive's own read interface — as Hasan and Ray demonstrated at USENIX Security 2020 requiring no exotic hardware — or via advanced physical techniques including scanning electron microscopy and Kelvin Probe Force Microscopy (KPFM) applied to charge-trap nitride layers is a documented attack vector. Note: Magnetic Force Microscopy (MFM) applies to magnetic HDDs — it is not relevant to NAND flash, which stores charge electrostatically rather than magnetically.
+Recovering this data via direct threshold voltage analysis using the drive's own read interface — as Hasan and Ray demonstrated at USENIX Security 2020 requiring no exotic hardware — is the primary documented attack vector. Physical techniques including scanning electron microscopy and Kelvin Probe Force Microscopy (KPFM) apply to planar NAND geometries — modern 3D TLC and QLC NAND makes physical probing significantly harder, and no public demonstration of microscopy-based recovery from 3D TLC NAND is known at the time of writing. Note: Magnetic Force Microscopy (MFM) applies to magnetic HDDs — it is not relevant to NAND flash.
 
 ---
 
@@ -102,6 +102,18 @@ AAD-50 bypasses the OS and communicates directly with the drive controller via f
 | A — Cryptographic Key Destruction | 46–50 | Crypto Erase | `0x04` |
 
 The deliberate **B → C → A** ordering is a security design decision. Physical cell overwrite runs first so that if a mid-sequence hardware fault occurs, raw NAND data has already been cleared. Cryptographic key destruction runs last as the final seal.
+
+**Why 40 cycles for Phase B?**
+
+An important distinction: NVMe Sanitize (Opcode 0x84) with NSID=0xFFFFFFFF already reaches all physical blocks — including over-provisioned zones, bad block pools, and wear-levelling reserves — in a single correctly executed cycle. The FTL coverage problem Wei et al. documented on ATA/SCSI drives is addressed by the NVMe Sanitize architecture itself.
+
+The 40-cycle allocation is justified on two separate grounds:
+
+**1. Firmware fault redundancy.** Wei et al. found 3 of 12 drives silently failed sanitization while reporting success. This firmware fault pattern is interface-agnostic. AAD-50's per-cycle Log Page 0x81 polling detects any cycle that fails — multiple cycles provide redundancy against transient firmware faults.
+
+**2. Analog threshold voltage neutralisation.** Hasan and Ray (USENIX Security 2020) proved data remains recoverable from digitally sanitized NAND via threshold voltage analysis using standard digital interfaces. Multiple overwrite cycles progressively smooth the threshold voltage distribution toward a neutral baseline.
+
+Hasan and Ray did not specify an empirically validated minimum cycle count for modern 3D NVMe NAND. The 40-cycle allocation is therefore a **conservative engineering choice** pending empirical validation — not a number derived directly from published data. The `--cycles N` flag on the roadmap will allow operators to choose a lower count once empirical data is available for their specific NAND geometry.
 
 ### Async Polling — The Critical Distinction
 
@@ -326,7 +338,7 @@ Specific areas where review is invited:
 - Correctness of the `nvme_admin_cmd` struct memory layout for the Linux kernel IOCTL interface
 - Log Page 0x81 SSTAT polling logic and timeout handling
 - Phase ordering security rationale (B → C → A)
-- Validity of the voltage hysteresis flattening argument for the 40-cycle Phase B allocation
+- Validity of the analog threshold voltage neutralisation argument for the 40-cycle Phase B allocation and whether the conservative engineering choice of 40 cycles is appropriate pending empirical validation on modern 3D NVMe NAND geometries
 
 Please open a GitHub Issue or contact directly at **yonas_abeselom@protonmail.com**.
 
