@@ -332,6 +332,51 @@ Please open a GitHub Issue or contact directly at **yonas_abeselom@protonmail.co
 
 ---
 
+## Struct Layout Verification
+
+The Linux implementation uses `nvme_passthru_cmd` (aliased as `nvme_admin_cmd`) via `NVME_IOCTL_ADMIN_CMD` (`0xC0484E41`).
+
+AAD-50's Python struct format string `BBHIIIQQIIIIIIIIII` (18 fields, 72 bytes) has been verified against two authoritative kernel sources:
+
+**Reference 1 — Linux kernel source (Torvalds tree):**
+`include/uapi/linux/nvme_ioctl.h` — [kernel.org](https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/include/uapi/linux/nvme_ioctl.h)
+
+**Reference 2 — libnvme (nvme-cli integrated library):**
+`nvme-cli/libnvme/src/nvme/lib-types.h` — `struct libnvme_passthru_cmd`
+
+Both sources confirm the layout:
+
+```
+Field          Type    Format   Offset
+opcode         __u8    B        0
+flags          __u8    B        1
+rsvd1          __u16   H        2
+nsid           __u32   I        4
+cdw2           __u32   I        8
+cdw3           __u32   I        12
+metadata       __u64   Q        16
+addr           __u64   Q        24
+metadata_len   __u32   I        32
+data_len       __u32   I        36
+cdw10          __u32   I        40
+cdw11          __u32   I        44
+cdw12          __u32   I        48
+cdw13          __u32   I        52
+cdw14          __u32   I        56
+cdw15          __u32   I        60
+timeout_ms     __u32   I        64
+result         __u32   I        68
+               Total:  72 bytes
+```
+
+Key notes:
+- `#define nvme_admin_cmd nvme_passthru_cmd` — confirmed in kernel source
+- `result` field is `__u32` (32-bit) — sufficient for sanitize admin command completion status
+- `NVME_IOCTL_ADMIN64_CMD` with `nvme_passthru_cmd64` (__u64 result) is not required for sanitize operations
+- Verification prompted by feedback from nvme-cli contributor **ikegami-t** on [RFC #3415](https://github.com/linux-nvme/nvme-cli/issues/3415) — June 2026
+
+---
+
 ## Whitepaper
 
 The full technical whitepaper — formatted to IEEE double-column standard — is available in this repository:
