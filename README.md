@@ -76,7 +76,7 @@ The Flash Translation Layer (FTL) constantly intercepts host writes and redirect
 - **Retired bad blocks** — degraded cells isolated by the FTL but never erased
 - **Wear-levelling pools** — historical data preserved across charge-trap nitride layers
 
-Recovering this data via chip-level hardware extraction or Magnetic Force Microscopy (MFM) is a known attack vector used in state-sponsored forensic operations.
+Recovering this data via chip-level hardware extraction, scanning electron microscopy, or direct charge-trap nitride layer probing is a known attack vector used in state-sponsored forensic operations. Note: Magnetic Force Microscopy (MFM) applies to magnetic HDDs — the relevant technique for NAND flash is charge-trap probing, which detects residual electron distributions in the floating gate after a digital erase.
 
 ---
 
