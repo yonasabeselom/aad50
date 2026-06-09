@@ -113,7 +113,9 @@ The 40-cycle allocation is justified on two separate grounds:
 
 **2. Analog threshold voltage neutralisation.** Hasan and Ray (USENIX Security 2020) proved data remains recoverable from digitally sanitized NAND via threshold voltage analysis using standard digital interfaces. Multiple overwrite cycles progressively smooth the threshold voltage distribution toward a neutral baseline.
 
-Hasan and Ray did not specify an empirically validated minimum cycle count for modern 3D NVMe NAND. The 40-cycle allocation is therefore a **conservative engineering choice** pending empirical validation — not a number derived directly from published data. The `--cycles N` flag on the roadmap will allow operators to choose a lower count once empirical data is available for their specific NAND geometry.
+It is important to note that Hasan and Ray's demonstration was conducted under controlled laboratory conditions with known data patterns on prepared drives — a proof-of-concept rather than a demonstration against a real-world drive with complex mixed workload history. The practical exploitability of this technique against real-world drives has not been publicly demonstrated. The physical phenomenon is real — its operational practicality in non-controlled scenarios remains an open question.
+
+Hasan and Ray did not specify an empirically validated minimum cycle count for modern 3D NVMe NAND. The 40-cycle allocation is therefore a **precautionary engineering measure** against a documented physical phenomenon — not a number derived directly from published data. For most threat models it is conservative. For nation-state adversaries targeting specific high-value drives — the precaution is justified because the capability cannot be ruled out.
 
 ### Async Polling — The Critical Distinction
 
