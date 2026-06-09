@@ -39,7 +39,7 @@
 
 The Abeselom ASIC-Direct 50 (AAD-50) is a firmware-enforced, 50-cycle data sanitization specification designed explicitly for NVMe solid-state drives. By leveraging low-level IOCTL pass-through structures to communicate directly with the on-drive ASIC, AAD-50 bypasses the operating-system filesystem layer entirely. The protocol executes a deterministic three-phase destruction matrix — physical NAND cell overwrite, Flash Translation Layer index teardown, and cryptographic key destruction — each cycle gated by active polling of NVMe Log Page 0x81 (Sanitize Status) to guarantee hardware-confirmed completion before the next cycle is issued.
 
-The result is a mathematically provable, forensically irreversible, and fully auditable sanitization standard aligned with NIST SP 800-88 Rev. 2 Purge classification and the NVMe Base Specification 2.0/2.1 Sanitize command set.
+The result is a probabilistically modelled, high-assurance sanitization protocol designed to defeat all currently known digital and analog forensic recovery techniques — fully auditable via SHA-256 tamper-evident chain-of-custody, and aligned with NIST SP 800-88 Rev. 2 Purge classification and the NVMe Base Specification 2.0/2.1 Sanitize command set.
 
 ---
 
