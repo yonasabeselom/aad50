@@ -335,7 +335,8 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 
 **Notable peer engagement to date:**
 
-- **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime. His concern was addressed in a technical reply explaining that NVMe Sanitize executes firmware-internally, not via host-driven sequential writes, making 50 cycles a matter of minutes rather than weeks. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. The performance analysis section of the whitepaper was added in direct response to this exchange.
+- **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime, then followed up with a second email raising a firmware optimisation concern about SSTAT reliability. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. Both concerns are documented in the specification's Limitations section.
+- **Keith Busch** (nvme-cli primary maintainer) — replied personally to a direct email about PR #3438, gave qualified approval for the --wait flag, and raised a design philosophy concern about tooling ergonomics vs operator expertise. His concern is documented in the specification's Limitations section.
 - **ikegami-t** (nvme-cli Contributor) — confirmed fire-and-forget behaviour on RFC #3415, verified struct layout against kernel source, and opened PR #3438 implementing `--wait` flag for nvme sanitize.
 - **NVM Express** — internally reviewing the specification.
 
