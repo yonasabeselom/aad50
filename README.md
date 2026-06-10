@@ -422,6 +422,28 @@ The full technical whitepaper — formatted to IEEE double-column standard — i
 
 📄 **[AAD50_Abeselom_Whitepaper.pdf](./AAD50_Abeselom_Whitepaper.pdf)**
 
+Written for security researchers, kernel engineers, standards bodies, and peer reviewers. Covers the full AAD-50 specification including mathematical justification, phase ordering rationale, asynchronous state validation framework, forensic resistance analysis, performance analysis, and empirical foundation in Wei et al. and Hasan and Ray.
+
+---
+
+## Plain Language Introduction
+
+Not a kernel engineer? Start here.
+
+📖 **[The_Unaudited_Drive.pdf](./The_Unaudited_Drive.pdf)**
+
+A plain-language guide to the NVMe sanitize firmware audit gap — written for IT managers, compliance officers, ITAD professionals, and anyone who needs to understand the problem without a systems engineering background.
+
+**Nine chapters covering:**
+- Why drive manufacturers self-certify with no independent audit
+- What Wei et al. found when they actually tested 12 drives (3 of 12 silently failed)
+- Why the same problem exists on modern NVMe drives
+- What operator-level verification looks like
+- What AAD-50 does and when you should use it
+- A practical guide by threat model and compliance context
+
+Includes profiles of all six researchers behind the two foundational papers (Wei et al. FAST 2011 and Hasan and Ray USENIX Security 2020) with direct links to the free papers.
+
 ---
 
 ## User Manual
