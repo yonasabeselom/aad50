@@ -462,6 +462,24 @@ Covers installation, all five screens, dry-run simulation, live sanitization, US
 
 ---
 
+## Known Limitations
+
+AAD-50 is presented as a protocol specification and reference implementation. The following limitations should be understood before deployment.
+
+**Firmware optimisation and SSTAT reliability.** The protocol assumes vendor firmware executes NVMe Sanitize operations as specified and reports Log Page 0x81 SSTAT accurately. A firmware implementation that marks blocks as logically erased without performing the physical NAND operation — or that collapses queued sanitize commands for efficiency — would defeat the verification mechanism. AAD-50's per-cycle SSTAT polling detects implementation errors and silent failures of the class Wei et al. documented. It does not address deliberate firmware misrepresentation of both sanitize execution and SSTAT reporting simultaneously. Against that threat model, no software-level protocol provides assurance. Physical destruction remains the only reliable method. *(Concern raised in private correspondence by P. Gutmann, University of Auckland, June 2026.)*
+
+**Operator expertise and tooling philosophy.** The NVMe Base Specification defines sanitize as an asynchronous operation by design. This behaviour is intentional and documented in the specification. As noted by K. Busch (nvme-cli maintainer, June 2026), operators using tools without understanding their asynchronous behaviour represents a tooling ergonomics problem rather than a specification deficiency. AAD-50 takes the position that for high-assurance compliance contexts, correct behaviour should be the default rather than requiring operator expertise to invoke. Operators who prefer composable single-command workflows can achieve equivalent verification by scripting nvme sanitize followed by nvme sanitize-log per cycle.
+
+**Firmware compliance dependency.** The protocol assumes the target drive correctly implements NVMe Sanitize (Opcode 0x84) per NVMe Base Specification 2.0. Wei et al. documented that 3 of 12 drives failed to execute the sanitize command they reported supporting. Pre-deployment SANICAP verification via nvme id-ctrl is strongly recommended.
+
+**Self-Encrypting Drive assumption.** Phase A (Crypto Erase, CDW10=0x04) is effective only on Self-Encrypting Drives (SEDs) with an internal Media Encryption Key. On non-SED drives, Phase A may return success without meaningful operation. Security rests on Phases B and C in that case.
+
+**Empirical validation scope.** The reference implementation has not yet been validated across multiple NVMe drive manufacturers, controller generations, or NAND geometries. Hardware testing is ongoing — Issue #3 tracks this work.
+
+**USB tier confirmation.** Tiers 2 and 3 use time-based polling rather than Log Page 0x81 hardware confirmation. For maximum assurance use Tier 1 via direct M.2 connection.
+
+---
+
 ## Compliance Alignment
 
 | Standard | Relevance |
