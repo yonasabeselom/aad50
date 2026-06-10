@@ -403,6 +403,15 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 > *"Thanks for the confirmation and explanation. Understood the situation. Later I will do try to add the repeat option."*
 > — ikegami-t, nvme-cli Contributor, June 9, 2026
 
+**June 9, 2026 — PR #3438 opened:** ikegami-t opened Pull Request #3438 on linux-nvme/nvme-cli implementing the `--wait` flag for nvme sanitize — directly addressing the fire-and-forget gap identified in RFC #3415. The PR references RFC #3415 explicitly in the pull request history.
+
+- **Status:** Open — awaiting maintainer review
+- **Checks:** 29/30 passed, no merge conflicts, clean merge
+- **Commit:** `bfcc03d` — "nvme: add support for sanitize wait option"
+- **PR:** https://github.com/linux-nvme/nvme-cli/pull/3438
+
+The `--repeat N` flag will follow in a separate PR.
+
 This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
 
 **Archived record:** https://github.com/linux-nvme/nvme-cli/issues/3415
