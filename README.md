@@ -420,7 +420,13 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 - **Commit message:** *"Make verified multi-cycle sanitization accessible without a separate tool."*
 - **SANICAP pre-flight verification** planned as a follow-up commit
 
-PR #3438 now contains both `--wait` and `--repeat N` — the complete verified multi-cycle sanitization architecture proposed in RFC #3415.
+**June 11, 2026 — SANICAP verification added to PR #3438:** ikegami-t pushed a third commit implementing SANICAP pre-flight verification and fixes for the repeat option. PR #3438 now contains the complete verification stack:
+
+- `--wait` — per-cycle Log Page 0x81 SSTAT confirmation
+- `--repeat N` — multi-cycle verified sanitization
+- **SANICAP pre-flight** — confirms drive capability before dispatching any cycle
+
+This is the full architecture proposed in RFC #3415. Awaiting maintainer merge.
 
 This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
 
