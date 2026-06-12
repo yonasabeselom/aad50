@@ -426,7 +426,7 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 - `--repeat N` — multi-cycle verified sanitization
 - **SANICAP pre-flight** — confirms drive capability before dispatching any cycle
 
-This is the full architecture proposed in RFC #3415. Awaiting maintainer merge.
+This is the full architecture proposed in RFC #3415. Keith Busch (nvme-cli primary maintainer) has given qualified personal approval for the PR via direct correspondence ("I guess it's fine"), but PR #3438 has not yet been formally merged on GitHub at time of writing.
 
 This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
 
@@ -494,6 +494,18 @@ AAD-50 is presented as a protocol specification and reference implementation. Th
 
 ---
 
+## Roadmap
+
+Planned improvements for future versions, several arising directly from peer review during v1.1:
+
+- **NDAS = 1 enforcement (v1.2)** — explicitly set CDW11 bit 9 (No Deallocate After Sanitize) to guarantee immediate physical block deallocation, closing the lazy-deallocation gap identified during peer review.
+- **`--cycles N` flag** — allow operators to select a Phase B cycle count appropriate to their threat model and NAND geometry, rather than the fixed 40-cycle default. Discussed in the whitepaper (Section 4.2) as the mechanism for tailoring AAD-50's conservative engineering margin to specific deployment contexts.
+- **AAD-50-side SANICAP pre-flight check** — verify drive sanitize capability via the SANICAP field of the Identify Controller response before dispatching any cycle, independent of the equivalent check landing in nvme-cli PR #3438.
+- **IEEE 2883-2022 formal alignment** — conduct and document a formal evaluation against IEEE 2883-2022, the current international storage sanitization standard.
+- **Expanded hardware validation** — testing across additional manufacturers, controller generations, and NAND geometries (MLC, TLC, QLC), tracked in Issue #3.
+
+---
+
 ## Compliance Alignment
 
 | Standard | Relevance |
@@ -551,13 +563,15 @@ AAD-50 occupies the correct engineering position: **faster than any software mul
 
 ## License
 
-AAD-50 uses a dual licence — see the [LICENSE](./LICENSE) file for full terms.
+AAD-50 uses a dual proprietary licence — see [LICENSE.txt](./LICENSE.txt) for full terms.
 
-**Specification and Whitepaper** — Licensed under [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/). You may share, reference, and build upon the specification freely, provided you credit Yonas Abeselom as the original author and link to this repository.
+**Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — Proprietary, all rights reserved. You may read, study, reference, and cite the specification, and share it in its original unmodified form with attribution to Yonas Abeselom and a link to this repository. You may implement the AAD-50 protocol in your own original code for personal, non-commercial use. Modifying, adapting, or creating derivative works of the specification, incorporating it into a commercial product, or using the AAD-50 name/branding requires prior written permission.
 
-**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`) — Proprietary. You may read and run the code for personal, non-commercial use. Redistribution, modification, or commercial use requires written permission from the author.
+**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`) — Proprietary, all rights reserved. You may view the source for educational/research purposes and run the software on hardware you own for personal, non-commercial use. Redistribution, modification, derivative works, forking as a standalone or competing project, and commercial use all require prior written permission from the author.
 
-For licensing enquiries: **yonas_abeselom@protonmail.com**
+Both parts are governed by the laws of Ethiopia and protected internationally under the Berne Convention, TRIPS, and the WIPO Copyright Treaty.
+
+For licensing enquiries, use the subject line "AAD-50 Licence Permission Request": **yonas_abeselom@protonmail.com**
 
 ---
 
