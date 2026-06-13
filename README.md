@@ -430,6 +430,8 @@ This is the full architecture proposed in RFC #3415. Keith Busch (nvme-cli prima
 
 This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
 
+**June 12, 2026 — PR #3438 updated:** ikegami-t force-pushed additional fixes to the SANICAP verification and repeat-option commits. AAD-50's author commented on the PR noting the practical effect of the SANICAP check: it confirms drive capability before dispatching any cycle, preventing silent failures on drives that report supporting an action they do not actually implement — directly addressing the class of firmware failure documented by Wei et al. The PR remains open awaiting formal maintainer merge from Daniel Wagner or Keith Busch; per ikegami-t, maintainer review has been delayed (over a week with no maintainer activity at time of writing), though work on the PR continues in the meantime.
+
 **Archived record:** https://github.com/linux-nvme/nvme-cli/issues/3415
 
 ---
