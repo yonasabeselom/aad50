@@ -115,6 +115,8 @@ The 40-cycle allocation is justified on two separate grounds:
 
 The primary justification for 40 cycles therefore remains **firmware fault redundancy** per Wei et al. The Hasan and Ray argument provides secondary, qualified justification where the scrubbing condition holds.
 
+**What this means for the number 40, specifically.** It's worth being precise about what is and isn't established here. The per-cycle Log Page 0x81 verification architecture, AAD-50's core contribution, directly answers Wei et al.'s call for built-in, verifiable sanitize operations, and that part does not depend on any specific cycle count. The number 40 itself is an engineering safety margin, not a value derived from either paper's data: Wei et al. tested obsolete ATA/SCSI drives where the FTL-coverage problem doesn't directly apply to NVMe's broadcast Sanitize, and Hasan and Ray's analog recovery technique is conditional on a scrubbing pattern that may not occur on modern TLC/QLC NAND at all. Readers should treat 40 as a conservative provisional default pending the `--cycles N` flag (Roadmap) and empirical hardware validation (Issue #3) — not as a number that either paper mathematically requires.
+
 ### Async Polling — The Critical Distinction
 
 The NVMe Sanitize command is **asynchronous**. The drive controller acknowledges the command instantly while performing the actual erasure in the background. Issuing 50 consecutive commands without confirmation produces a race condition that defeats the multi-cycle guarantee entirely.
