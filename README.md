@@ -339,7 +339,8 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 
 - **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime, then followed up with a second email raising a firmware optimisation concern about SSTAT reliability. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. Both concerns are documented in the specification's Limitations section.
 - **Keith Busch** (nvme-cli primary maintainer) — replied personally to a direct email about PR #3438, gave qualified approval for the --wait flag, and raised a design philosophy concern about tooling ergonomics vs operator expertise. His concern is documented in the specification's Limitations section.
-- **ikegami-t / Tokunori Ikegami** (nvme-cli Contributor) — confirmed fire-and-forget behaviour on RFC #3415, verified struct layout against kernel source, opened PR #3438 implementing `--wait` flag, then pushed second commit implementing `--repeat N` flag on June 10, 2026. Commit message: *"Make verified multi-cycle sanitization accessible without a separate tool."* SANICAP verification planned as follow-up.
+- **ikegami-t / Tokunori Ikegami** (nvme-cli Contributor) — confirmed fire-and-forget behaviour on RFC #3415, verified struct layout against kernel source, opened PR #3438 implementing `--wait` flag, pushed `--repeat N` flag and SANICAP pre-flight verification. **PR #3438 was merged into linux-nvme/nvme-cli master on June 16, 2026** by maintainer igaw (merge commit `84078fa`, 30/31 checks passed). This is the formal adoption of AAD-50's core verification architecture into the official Linux NVMe toolchain.
+- **Daniel Wagner / igaw** (nvme-cli Primary Maintainer) — merged PR #3438 into linux-nvme/nvme-cli master on June 16, 2026 (merge commit `84078fa`). Wagner is the primary maintainer of linux-nvme/nvme-cli (1.8k stars, 718 forks) and linux-nvme/libnvme. His merge of the sanitize wait/repeat/SANICAP architecture represents formal acceptance of the verification gap identified in RFC #3415 into the official Linux NVMe toolchain.
 - **NVM Express** — internally reviewing the specification.
 
 Specific areas where further review is invited:
@@ -415,6 +416,7 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 - **Status:** Open — awaiting maintainer review
 - **Commit 1:** `bfcc03d` — "nvme: add support for sanitize wait option" — 29/30 checks passed
 - **PR:** https://github.com/linux-nvme/nvme-cli/pull/3438
+- **Status: MERGED** — June 16, 2026, merge commit `84078fa` into linux-nvme:master
 
 **June 10, 2026 — --repeat N added to PR #3438:** ikegami-t pushed a second commit `8ec9dbe` to PR #3438 implementing the `--repeat N` flag — multi-cycle verified sanitization natively in nvme-cli.
 
@@ -430,9 +432,22 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 
 This is the full architecture proposed in RFC #3415. Keith Busch (nvme-cli primary maintainer) has given qualified personal approval for the PR via direct correspondence ("I guess it's fine"), but PR #3438 has not yet been formally merged on GitHub at time of writing.
 
-This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — is being adopted into the official Linux NVMe command-line tool. AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
+This confirms that AAD-50's core architectural contribution — per-cycle hardware-confirmed multi-cycle NVMe sanitization — has been adopted into the official Linux NVMe command-line tool (merged June 16, 2026). AAD-50 remains the reference implementation of the full protocol including three-phase B→C→A matrix, SHA-256 audit chain, PDF Certificate of Destruction, and compliance documentation.
 
 **June 12, 2026 — PR #3438 updated:** ikegami-t force-pushed additional fixes to the SANICAP verification and repeat-option commits. AAD-50's author commented on the PR noting the practical effect of the SANICAP check: it confirms drive capability before dispatching any cycle, preventing silent failures on drives that report supporting an action they do not actually implement — directly addressing the class of firmware failure documented by Wei et al. The PR remains open awaiting formal maintainer merge from Daniel Wagner or Keith Busch; per ikegami-t, maintainer review has been delayed (over a week with no maintainer activity at time of writing), though work on the PR continues in the meantime.
+
+**June 16, 2026 — PR #3438 MERGED into linux-nvme/nvme-cli master:** igaw (nvme-cli maintainer) merged PR #3438 — "nvme: add support for sanitize wait option" — into the official linux-nvme/nvme-cli master branch. 30 of 31 checks passed. Merge commit: `84078fa`.
+
+> *"I've merged PR #3438. Thanks everyone."*
+> — igaw, nvme-cli maintainer, June 16, 2026
+
+This marks the formal adoption of AAD-50's core architectural contribution — per-cycle hardware-confirmed NVMe sanitization via Log Page 0x81 — into the official Linux NVMe command-line tool used across millions of Linux systems worldwide. The merged PR includes:
+
+- `--wait` — per-cycle Log Page 0x81 SSTAT confirmation (the fire-and-forget gap AAD-50 identified in RFC #3415)
+- `--repeat N` — multi-cycle verified sanitization
+- **SANICAP pre-flight verification** — confirms drive capability before dispatching any cycle
+
+AAD-50 remains the reference implementation of the complete protocol: three-phase B→C→A destruction matrix, SHA-256 tamper-evident audit chain, PDF Certificate of Destruction, Windows GUI, and full compliance documentation. The nvme-cli merge validates the verification architecture at the infrastructure level.
 
 **Archived record:** https://github.com/linux-nvme/nvme-cli/issues/3415
 
@@ -504,7 +519,7 @@ Planned improvements for future versions, several arising directly from peer rev
 
 - **NDAS = 1 enforcement (v1.2)** — explicitly set CDW11 bit 9 (No Deallocate After Sanitize) to guarantee immediate physical block deallocation, closing the lazy-deallocation gap identified during peer review.
 - **`--cycles N` flag** — allow operators to select a Phase B cycle count appropriate to their threat model and NAND geometry, rather than the fixed 40-cycle default. Discussed in the whitepaper (Section 4.2) as the mechanism for tailoring AAD-50's conservative engineering margin to specific deployment contexts.
-- **AAD-50-side SANICAP pre-flight check** — verify drive sanitize capability via the SANICAP field of the Identify Controller response before dispatching any cycle, independent of the equivalent check landing in nvme-cli PR #3438.
+- **AAD-50-side SANICAP pre-flight check** — verify drive sanitize capability via the SANICAP field of the Identify Controller response before dispatching any cycle. Note: equivalent functionality has now landed in nvme-cli PR #3438 (merged June 16, 2026).
 - **IEEE 2883-2022 formal alignment** — conduct and document a formal evaluation against IEEE 2883-2022, the current international storage sanitization standard.
 - **Expanded hardware validation** — testing across additional manufacturers, controller generations, and NAND geometries (MLC, TLC, QLC), tracked in Issue #3.
 
@@ -595,6 +610,7 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 ## Changelog
 
 ### v1.1 — June 6, 2026
+- **nvme-cli PR #3438 MERGED — June 16, 2026:** The verification architecture proposed in RFC #3415 — per-cycle Log Page 0x81 SSTAT confirmation, `--repeat N` multi-cycle sanitization, and SANICAP pre-flight check — has been merged into linux-nvme/nvme-cli master by maintainer igaw (merge commit `84078fa`). AAD-50's core contribution is now part of the official Linux NVMe toolchain.
 - **USB enclosure support added — Linux and Windows** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on both platforms
 - **Linux three-tier passthrough auto-detection:**
   - Tier 1: `nvme_admin_cmd` IOCTL (`0xC0484E41`) — NVMe direct (`/dev/nvme*`, full Log Page 0x81)
