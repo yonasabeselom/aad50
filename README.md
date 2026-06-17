@@ -341,6 +341,7 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 - **Keith Busch** (nvme-cli primary maintainer) — replied personally to a direct email about PR #3438, gave qualified approval for the --wait flag, and raised a design philosophy concern about tooling ergonomics vs operator expertise. His concern is documented in the specification's Limitations section.
 - **ikegami-t / Tokunori Ikegami** (nvme-cli Contributor) — confirmed fire-and-forget behaviour on RFC #3415, verified struct layout against kernel source, opened PR #3438 implementing `--wait` flag, pushed `--repeat N` flag and SANICAP pre-flight verification. **PR #3438 was merged into linux-nvme/nvme-cli master on June 16, 2026** by maintainer igaw (merge commit `84078fa`, 30/31 checks passed). This is the formal adoption of AAD-50's core verification architecture into the official Linux NVMe toolchain.
 - **Daniel Wagner / igaw** (nvme-cli Primary Maintainer) — merged PR #3438 into linux-nvme/nvme-cli master on June 16, 2026 (merge commit `84078fa`). Wagner is the primary maintainer of linux-nvme/nvme-cli (1.8k stars, 718 forks) and linux-nvme/libnvme. His merge of the sanitize wait/repeat/SANICAP architecture represents formal acceptance of the verification gap identified in RFC #3415 into the official Linux NVMe toolchain.
+- **hiyohiyo / CrystalDiskInfo** (Windows NVMe Tool, 2.9k stars, hundreds of millions of downloads) — RFC #308 opened June 17, 2026 proposing Log Page 0x81 sanitize completion verification for Windows — the Windows equivalent of nvme-cli RFC #3415. RFC: https://github.com/hiyohiyo/CrystalDiskInfo/issues/308
 - **NVM Express** — internally reviewing the specification.
 
 Specific areas where further review is invited:
@@ -405,6 +406,7 @@ The per-cycle Log Page 0x81 SSTAT verification architecture and multi-cycle NVMe
 
 - **AAD-50 v1.0** — published June 2026 at https://github.com/yonasabeselom/aad50
 - **RFC #3415** — opened June 2, 2026 on linux-nvme/nvme-cli: https://github.com/linux-nvme/nvme-cli/issues/3415
+- **RFC #308** — opened June 17, 2026 on hiyohiyo/CrystalDiskInfo (Windows): https://github.com/hiyohiyo/CrystalDiskInfo/issues/308
 
 **June 9, 2026 — Milestone:** Following the RFC #3415 discussion, nvme-cli contributor **ikegami-t** confirmed intent to implement a `--repeat N` flag with per-cycle SSTAT verification natively in nvme-cli:
 
@@ -621,6 +623,7 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 ### v1.1 — June 6, 2026
 - **nvme-cli PR #3438 MERGED — June 16, 2026:** The verification architecture proposed in RFC #3415 — per-cycle Log Page 0x81 SSTAT confirmation, `--repeat N` multi-cycle sanitization, and SANICAP pre-flight check — has been merged into linux-nvme/nvme-cli master by maintainer igaw (merge commit `84078fa`). AAD-50's core contribution is now part of the official Linux NVMe toolchain.
+- **CrystalDiskInfo RFC #308 opened — June 17, 2026:** RFC #308 opened on hiyohiyo/CrystalDiskInfo proposing the same Log Page 0x81 sanitize completion verification architecture for Windows — the Windows equivalent of nvme-cli RFC #3415. https://github.com/hiyohiyo/CrystalDiskInfo/issues/308
 - **USB enclosure support added — Linux and Windows** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on both platforms
 - **Linux three-tier passthrough auto-detection:**
   - Tier 1: `nvme_admin_cmd` IOCTL (`0xC0484E41`) — NVMe direct (`/dev/nvme*`, full Log Page 0x81)
