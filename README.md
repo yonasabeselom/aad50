@@ -483,6 +483,16 @@ Includes profiles of all six researchers behind the two foundational papers (Wei
 
 ---
 
+## Write-up
+
+The full story behind RFC #3415 and the nvme-cli merge — written the day PR #3438 landed in master:
+
+📝 **[How I Got `--wait` and `--repeat` Added to nvme-cli](https://gist.github.com/yonasabeselom/770e825cba1651ac391145a4fbdaa310)**
+
+Covers the fire-and-forget gap, the Wei et al. research foundation, how RFC #3415 led to the merge in 14 days, what the new flags mean in practice, and what AAD-50 still provides beyond nvme-cli. Written for a general technical audience — no prior knowledge of NVMe required.
+
+---
+
 ## User Manual
 
 A complete step-by-step user manual for the Windows GUI application:
