@@ -337,7 +337,12 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 
 **Notable peer engagement to date:**
 
-- **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime, then followed up with a second email raising a firmware optimisation concern about SSTAT reliability. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. Both concerns are documented in the specification's Limitations section.
+- **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime, then followed up with a second email raising a firmware optimisation concern about SSTAT reliability. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. Both concerns are documented in the specification's Limitations section. Following the nvme-cli merge, Gutmann reviewed the updated specification and wrote:
+
+  > *"It looks pretty good, I can't really find anything to complain about :-)"*
+  > — Peter Gutmann, private correspondence, June 18, 2026
+
+  Also suggested submission to USENIX.
 - **Keith Busch** (nvme-cli primary maintainer) — replied personally to a direct email about PR #3438, gave qualified approval for the --wait flag, and raised a design philosophy concern about tooling ergonomics vs operator expertise. His concern is documented in the specification's Limitations section.
 - **ikegami-t / Tokunori Ikegami** (nvme-cli Contributor) — confirmed fire-and-forget behaviour on RFC #3415, verified struct layout against kernel source, opened PR #3438 implementing `--wait` flag, pushed `--repeat N` flag and SANICAP pre-flight verification. **PR #3438 was merged into linux-nvme/nvme-cli master on June 16, 2026** by maintainer igaw (merge commit `84078fa`, 30/31 checks passed). This is the formal adoption of AAD-50's core verification architecture into the official Linux NVMe toolchain.
 - **Daniel Wagner / igaw** (nvme-cli Primary Maintainer) — merged PR #3438 into linux-nvme/nvme-cli master on June 16, 2026 (merge commit `84078fa`). Wagner is the primary maintainer of linux-nvme/nvme-cli (1.8k stars, 718 forks) and linux-nvme/libnvme. His merge of the sanitize wait/repeat/SANICAP architecture represents formal acceptance of the verification gap identified in RFC #3415 into the official Linux NVMe toolchain.
