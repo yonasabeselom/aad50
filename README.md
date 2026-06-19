@@ -340,7 +340,7 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 - **Peter Gutmann** (University of Auckland) — author of the Gutmann 35-pass method, Reference [1] in the AAD-50 whitepaper — wrote a personal email directly to the author raising a technical concern about runtime, then followed up with a second email raising a firmware optimisation concern about SSTAT reliability. All correspondence with Gutmann was conducted exclusively through private email — he did not post publicly on any forum, RFC, or platform. Both concerns are documented in the specification's Limitations section. Following the nvme-cli merge, Gutmann reviewed the updated specification and wrote:
 
   > *"It looks pretty good, I can't really find anything to complain about :-)"*
-  > — Peter Gutmann, private correspondence, June 18, 2026
+  > — Peter Gutmann, private correspondence, June 19, 2026
 
   Also suggested submission to USENIX.
 - **Keith Busch** (nvme-cli primary maintainer) — replied personally to a direct email about PR #3438, gave qualified approval for the --wait flag, and raised a design philosophy concern about tooling ergonomics vs operator expertise. His concern is documented in the specification's Limitations section.
