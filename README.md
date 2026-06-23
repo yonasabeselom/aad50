@@ -491,6 +491,23 @@ Includes profiles of all six researchers behind the two foundational papers (Wei
 
 ---
 
+## Companion Tools
+
+### REDACT — Windows Privacy Cleaner
+
+A standalone Windows privacy cleaning utility included in the [`tools/`](tools/) folder of this repository.
+
+- 65 cleanup items across 3 sensitivity tiers (LOW / MEDIUM / HIGH)
+- 1-pass, 7-pass DoD, and 35-pass Gutmann wipe modes
+- NVMe/SSD optimised with TRIM command after cleaning
+- Registry backup before any changes
+- Vista-style Matte Black GUI
+- Generates a full cleaning report to Desktop
+
+> **REDACT** handles OS-level privacy cleaning. **AAD-50** handles firmware-level NVMe drive sanitization. Together they cover the full spectrum of Windows data security — from active-use privacy traces to complete forensic-grade drive retirement.
+
+---
+
 ## Write-up
 
 The full story behind RFC #3415 and the nvme-cli merge — written the day PR #3438 landed in master:
