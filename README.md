@@ -493,18 +493,25 @@ Includes profiles of all six researchers behind the two foundational papers (Wei
 
 ## Companion Tools
 
-### REDACT — Windows Privacy Cleaner
+### REDACT — Windows Privacy Cleaner & Forensic Trace Eliminator
 
 A standalone Windows privacy cleaning utility included in the [`tools/`](tools/) folder of this repository.
 
-- 65 cleanup items across 3 sensitivity tiers (LOW / MEDIUM / HIGH)
-- 1-pass, 7-pass DoD, and 35-pass Gutmann wipe modes
-- NVMe/SSD optimised with TRIM command after cleaning
-- Registry backup before any changes
-- Vista-style Matte Black GUI
-- Generates a full cleaning report to Desktop
+- **100 cleanup items** across 3 sensitivity tiers (LOW / MEDIUM / HIGH) plus a Safe Mode preset
+- **4 NVMe-optimised wipe modes:**
+  - Single-pass NVMe (cryptographically random — fast, everyday use)
+  - NIST SP 800-88 (3-pass — aligned with current NIST media sanitization guidelines)
+  - 7-pass DoD (DoD 5220.22-M adapted for flash storage)
+  - 35-pass Gutmann-NVMe (NVMe-adapted Gutmann pattern matrix with 26 random passes)
+- **TRIM issued after every cleaning run** — signals the NVMe controller to physically erase deallocated blocks at the firmware level, closing the FTL gap that standard file deletion leaves open
+- **Full registry backup** to Desktop before any cleaning begins — automatic rollback snapshot for every run
+- **Rollback recovery folder** — files are backed up before destruction, staged to Desktop
+- **Windows 11 Fluent Dark UI** — per-item toggle switches across tier-grouped cards
+- **Cleaning report** saved to Desktop after every run — full chain-of-custody log
 
-> **REDACT** handles OS-level privacy cleaning. **AAD-50** handles firmware-level NVMe drive sanitization. Together they cover the full spectrum of Windows data security — from active-use privacy traces to complete forensic-grade drive retirement.
+> **REDACT** handles OS-level privacy cleaning (files, caches, registry traces, browser history, credentials, forensic artefacts).  
+> **AAD-50** handles firmware-level NVMe drive sanitization (all NAND cells including over-provisioned zones, FTL mapping, cryptographic keys).  
+> Together they cover the full stack — from the Windows registry down to the raw NAND cells.
 
 ---
 
