@@ -25,7 +25,7 @@ import winreg
 
 # ─── Wipe Engine ──────────────────────────────────────────────────────────────
 WIPE_MODE_KEY = "single"
-BACKUP_DIR_PATH = ""  # Globally initialized per run string path context
+DROPZONE_DIR_PATH = ""  # Globally initialized consolidated parent folder path context
 
 class Stats:
     def reset(self):
@@ -66,18 +66,19 @@ def _single_pass(size):
     return [secrets.token_bytes(size)]
 
 def _backup_target_file(path):
-    """Safely mirrors file parameters to the recovery folder before destruction blocks execution."""
-    global BACKUP_DIR_PATH
-    if not BACKUP_DIR_PATH or not os.path.isfile(path):
+    """Safely mirrors file parameters to the upfront visibility layer inside the dropzone directory before deletion."""
+    global DROPZONE_DIR_PATH
+    if not DROPZONE_DIR_PATH or not os.path.isfile(path):
         return
     try:
-        # Create unique structural tracking directories inside safety store
+        # Create an upfront, easily accessible mirrored file space layer inside the dropzone folder root
+        upfront_recovery_root = os.path.join(DROPZONE_DIR_PATH, "[ RECOVERY_SNAPSHOT ]", "System_Files")
         rel_sub = path.replace(":", "").strip("\\")
-        dest_full = os.path.join(BACKUP_DIR_PATH, rel_sub)
+        dest_full = os.path.join(upfront_recovery_root, rel_sub)
         os.makedirs(os.path.dirname(dest_full), exist_ok=True)
         shutil.copy2(path, dest_full)
     except Exception:
-        pass # Safeguard pipeline continuity if locking constraints deny read permissions
+        pass 
 
 def _wipe_file(path):
     try:
@@ -88,7 +89,7 @@ def _wipe_file(path):
             STATS.files += 1
             return f"  Wiped (empty): {path}"
         
-        # Initialize rollback snapshot store copy sequence
+        # Trigger the upfront recovery tracking mechanism copy sequence
         _backup_target_file(path)
         
         passes = {"single":_single_pass,"nist":_nist_passes,"secure":_dod7_passes,"gutmann":_nvme_passes}[WIPE_MODE_KEY](size)
@@ -294,7 +295,7 @@ W11_SELECT_BG   = "#3a3a3a"
 
 LOW_COLOR       = "#107c41"  
 MED_COLOR       = "#ffb900"  
-HIGH_COLOR      = "#e81123"  
+HIGH_COLOR       = "#e81123"  
 
 FONT_FL_MAIN    = ("Segoe UI", 10)
 FONT_FL_BOLD    = ("Segoe UI", 10, "bold")
@@ -338,7 +339,7 @@ class App(tk.Tk):
         super().__init__()
         self.title("REDACT v1.0")
         
-        # Pull taskbar constraint workarea sizes
+        # Lock geometry configurations precisely above the taskbar monitor constraints
         rect = RECT()
         ctypes.windll.user32.SystemParametersInfoW(48, 0, ctypes.byref(rect), 0)
         width = rect.right - rect.left
@@ -371,7 +372,7 @@ class App(tk.Tk):
         self.btn_run.bind("<Enter>", lambda e: self.btn_run.config(bg="#005a9e"))
         self.btn_run.bind("<Leave>", lambda e: self.btn_run.config(bg="#004578"))
 
-        # ── New Execution Monitoring Dashboard Block (Directly Below Controls Header Area) ──
+        # ── Execution Monitoring Dashboard Block (Directly Below Controls Header Area) ──
         self.monitor_panel = tk.Frame(self, bg=W11_CARD, bd=1, relief="solid", padx=25, pady=12)
         self.monitor_panel.pack(fill="x", padx=25, pady=5)
         
@@ -381,7 +382,6 @@ class App(tk.Tk):
         self.lbl_realtime_erased = tk.Label(self.monitor_panel, text="Space Freed: 0 B", font=FONT_FL_BOLD, fg=LOW_COLOR, bg=W11_CARD)
         self.lbl_realtime_erased.pack(side="left", padx=(0, 40))
         
-        # Modern Fluent styled percentage progress bar track
         self.pbar = ttk.Progressbar(self.monitor_panel, orient="horizontal", mode="determinate")
         self.pbar.pack(side="right", fill="x", expand=True, padx=(10, 0))
 
@@ -509,6 +509,17 @@ class App(tk.Tk):
         n = sum(1 for v in self.vars.values() if v.get())
         self.lbl_metrics.config(text=f"{n:02d} / 100 Targets Active")
 
+    def _backup_registry_hives(self, recovery_root_path):
+        """Export full HKCU and HKLM registry hives upfront straight into the root dropzone folder layout."""
+        reg_out_dir = os.path.join(recovery_root_path, "Registry_Hives")
+        os.makedirs(reg_out_dir, exist_ok=True)
+        
+        hkcu_target = os.path.join(reg_out_dir, "HKCU_backup.reg")
+        hklm_target = os.path.join(reg_out_dir, "HKLM_backup.reg")
+        
+        subprocess.run(f'reg export HKCU "{hkcu_target}" /y', shell=True, capture_output=True, timeout=60)
+        subprocess.run(f'reg export HKLM "{hklm_target}" /y', shell=True, capture_output=True, timeout=120)
+
     def _verify_intent(self):
         selected = [(t, i, n, d, fn) for (t, i, n, d, fn) in ALL_ITEMS if self.vars[i].get()]
         if not selected:
@@ -521,15 +532,25 @@ class App(tk.Tk):
             threading.Thread(target=self._dispatch_engine, args=(selected,), daemon=True).start()
 
     def _dispatch_engine(self, selected):
-        global WIPE_MODE_KEY, BACKUP_DIR_PATH
+        global WIPE_MODE_KEY, DROPZONE_DIR_PATH
         WIPE_MODE_KEY = self._wipe_mode
         STATS.reset()
         
-        # Initialize rollback safety backup directories on Desktop prior to destruction execution
+        # ── Re-Engineered Consolidated Alpha Dropzone Parent Folder ──
         desktop_path = os.path.join(os.path.expanduser("~"), "Desktop")
         stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        BACKUP_DIR_PATH = os.path.join(desktop_path, f"REDACT_Recovery_Rollback_{stamp}")
-        os.makedirs(BACKUP_DIR_PATH, exist_ok=True)
+        DROPZONE_DIR_PATH = os.path.join(desktop_path, f"REDACT_Alpha_Dropzone_{stamp}")
+        os.makedirs(DROPZONE_DIR_PATH, exist_ok=True)
+        
+        # Build immediate upfront directory for snapshots right when opening the dropzone folder
+        upfront_snapshot_dir = os.path.join(DROPZONE_DIR_PATH, "[ RECOVERY_SNAPSHOT ]")
+        os.makedirs(upfront_snapshot_dir, exist_ok=True)
+        
+        # Force registry keys backup step upfront inside the container dropzone
+        try:
+            self._backup_registry_hives(upfront_snapshot_dir)
+        except Exception:
+            pass
         
         total = len(selected)
         log_report_lines = [
@@ -537,7 +558,7 @@ class App(tk.Tk):
             "                          REDACT v1.0 REPORT                            ",
             f" Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} ",
             f" Selected Clean Modules: {total} of 100",
-            f" Rollback Store Point: {BACKUP_DIR_PATH}",
+            f" Consolidated Dropzone Location: {DROPZONE_DIR_PATH}",
             f" Wipe Mode Target Standard: {WIPE_MODES[self._wipe_mode][0]}",
             "========================================================================\n"
         ]
@@ -568,19 +589,20 @@ class App(tk.Tk):
             f" Total Real-Estate Storage Cleared : {final_size}",
             f" Structural Registry Keys Severed  : {STATS.reg_keys}",
             f" Access Failures / Locked Skips   : {STATS.skipped}",
-            f" Rollback Store Point Location    : {BACKUP_DIR_PATH}",
+            f" Complete Consolidated dropzone   : {DROPZONE_DIR_PATH}",
             "========================================================================"
         ])
         
-        report_filename = f"REDACT_Sanitizer_Log_{stamp}.txt"
-        complete_target_filepath = os.path.join(desktop_path, report_filename)
+        # Encapsulated Report: Save the final log directly inside the dropzone root instead of separate desktop loose tracks
+        report_filename = "REDACT_Execution_Log.txt"
+        complete_target_filepath = os.path.join(DROPZONE_DIR_PATH, report_filename)
         
         try:
             with open(complete_target_filepath, "w", encoding="utf-8") as target_file:
                 target_file.write("\n".join(log_report_lines))
-            saved_notification = f"Report saved to Desktop:\n{report_filename}"
+            saved_notification = "Execution Log Encapsulated Directly Inside Dropzone Folder Root."
         except Exception as file_write_fault:
-            saved_notification = f"Could not save document report path payload: {file_write_fault}"
+            saved_notification = f"Could not write log file block: {file_write_fault}"
 
         self.btn_run.config(state="normal", text="INITIALIZE PIPELINE CLEAN")
         self.pbar['value'] = 0
@@ -589,7 +611,7 @@ class App(tk.Tk):
         self.lbl_realtime_erased.config(text=f"Space Freed: {final_size}")
         self._none()
         
-        messagebox.showinfo("REDACT Pipeline Complete", f"All operations finalized successfully.\n\nFiles Purged: {STATS.files}\nTotal Space Erased: {final_size}\n\nRecovery Snapshot Point Staged on Desktop:\n{os.path.basename(BACKUP_DIR_PATH)}\n\n{saved_notification}")
+        messagebox.showinfo("REDACT Pipeline Complete", f"All operations finalized successfully.\n\nFiles Purged: {STATS.files}\nTotal Space Erased: {final_size}\n\nConsolidated Dropzone Package:\n{os.path.basename(DROPZONE_DIR_PATH)}\n\n{saved_notification}")
 
 if __name__ == "__main__":
     app = App()
