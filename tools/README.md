@@ -102,6 +102,37 @@ Every REDACT session produces a full cleaning report saved to your Desktop — l
 
 ---
 
+## How REDACT Compares to Other Windows Cleaners
+
+| Feature | CCleaner | BleachBit | Eraser | Blancco | **REDACT** |
+|---------|----------|-----------|--------|---------|------------|
+| NVMe/SSD-optimised architecture | ✗ | ✗ | ✗ | Partial | ✅ |
+| TRIM issued after cleaning | ✗ | ✗ | ✗ | Partial | ✅ |
+| NIST SP 800-88 wipe standard | ✗ | ✗ | ✗ | ✅ | ✅ |
+| DoD 5220.22-M wipe mode | ✗ | ✅ | ✅ | ✅ | ✅ |
+| Gutmann-NVMe adapted wipe | ✗ | Legacy HDD only | Legacy HDD only | ✗ | ✅ |
+| Automatic registry backup | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Rollback recovery folder | ✗ | ✗ | ✗ | ✗ | ✅ |
+| ShellBag cleaning | ✗ | ✗ | ✗ | ✗ | ✅ |
+| SRUM database cleaning | ✗ | ✗ | ✗ | ✗ | ✅ |
+| BAM / AmCache / Shimcache | ✗ | ✗ | ✗ | ✗ | ✅ |
+| NTFS journal purge | ✗ | ✗ | ✗ | ✗ | ✅ |
+| Compliance-grade cleaning report | ✗ | ✗ | ✗ | ✅ | ✅ |
+| 3-tier sensitivity model | ✗ | ✗ | ✗ | Partial | ✅ |
+| Free and open source | Freemium | ✅ | ✅ | ✗ (enterprise pricing) | ✅ |
+| Windows 11 Fluent UI | ✗ | ✗ | ✗ | ✗ | ✅ |
+
+**Where REDACT sits in the market:**
+
+- **vs CCleaner / Glary Utilities / Privacy Eraser** — consumer-grade tools built for HDD-era deletion. No TRIM, no forensic artifact targeting, no compliance documentation, no registry safety backup. REDACT goes significantly deeper.
+- **vs BleachBit** — strong open-source cleaner with DoD/Gutmann modes, but those modes are HDD-adapted legacy patterns. No NVMe awareness, no TRIM, no ShellBag/SRUM/BAM targeting, no registry backup.
+- **vs Eraser** — focused on file-level secure deletion with good wipe standards, but no system-wide forensic artifact cleaning, no TRIM, no registry backup, no compliance report.
+- **vs Blancco** — the industry-standard enterprise solution. Powerful, certified, expensive, and closed-source. REDACT is the free, open-source alternative for the forensic trace elimination use case — not a full enterprise drive erasure replacement (that is AAD-50's domain).
+
+**REDACT's unique position:** The only free, open-source Windows cleaner that is explicitly NVMe/SSD-aware, NIST SP 800-88 aligned, targets deep forensic kernel artifacts (ShellBags, SRUM, BAM, NTFS journals), and produces compliance-grade documentation — with an automatic registry safety backup before every run.
+
+---
+
 ## REDACT + AAD-50: Full-Stack Remediation
 
 | Layer | Tool | What it addresses |
