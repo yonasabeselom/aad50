@@ -48,6 +48,12 @@ The result is a probabilistically modelled, high-assurance sanitization protocol
 
 ![AAD-50 Step-by-Step Process](AAD50_Process_Infographic.png)
 
+### Full Architecture One-Pager (June 2026)
+
+Complete visual reference including 3-tier passthrough, B→C→A phase matrix, Log Page 0x81 verification, SHA-256 audit chain, SSTAT codes, RFC chain, peer review, platform support, GitHub traction, and standards alignment.
+
+![AAD-50 Full Architecture One-Pager](AAD50_onepager.png)
+
 ---
 
 ## The Problem
