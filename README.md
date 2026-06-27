@@ -662,11 +662,11 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 ## Changelog
 
-### v1.1 — June 6, 2026
+### v1.1 — June 26, 2026
 - **nvme-cli PR #3438 MERGED — June 16, 2026:** The verification architecture proposed in RFC #3415 — per-cycle Log Page 0x81 SSTAT confirmation, `--repeat N` multi-cycle sanitization, and SANICAP pre-flight check — has been merged into linux-nvme/nvme-cli master by maintainer igaw (merge commit `84078fa`). AAD-50's core contribution is now part of the official Linux NVMe toolchain.
-- **nvme-cli v3.0-b.1 RELEASED — June 26, 2026:** PR #3438 (`nvme: add support for sanitize wait option`) is officially listed in the nvme-cli v3.0-b.1 release changelog. The `--wait` and `--repeat` flags are now shipping in a numbered nvme-cli release available to all Linux distributions.
 - **CrystalDiskInfo RFC #308 opened — June 17, 2026:** RFC #308 opened on hiyohiyo/CrystalDiskInfo proposing the same Log Page 0x81 sanitize completion verification architecture for Windows. https://github.com/hiyohiyo/CrystalDiskInfo/issues/308
 - **Eraser RFC #3 opened — June 25, 2026:** RFC #3 opened on gtrant/eraser proposing native NVMe Sanitize command support with Log Page 0x81 completion verification as a drive-level erasure option, with AAD-50 as reference implementation. https://github.com/gtrant/eraser/issues/3
+- **nvme-cli v3.0-b.1 RELEASED — June 26, 2026:** PR #3438 (`nvme: add support for sanitize wait option`) is officially listed in the nvme-cli v3.0-b.1 release changelog. The `--wait` and `--repeat` flags are now shipping in a numbered nvme-cli release available to all Linux distributions.
 - **USB enclosure support added — Linux and Windows** — NVMe drives in USB 3.x enclosures (UASP) now fully supported on both platforms
 - **Linux three-tier passthrough auto-detection:**
   - Tier 1: `nvme_admin_cmd` IOCTL (`0xC0484E41`) — NVMe direct (`/dev/nvme*`, full Log Page 0x81)
