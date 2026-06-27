@@ -12,7 +12,7 @@
 #               + blkdiscard fallback
 # Target Media: NVMe Solid-State Drives (Enterprise & Consumer NAND Flash)
 #               including NVMe drives in USB 3.x enclosures with UASP support
-# Compliance  : NIST SP 800-88 Rev.1 "Purge" | NVMe Base Spec 2.0/2.1
+# Compliance  : NIST SP 800-88 Rev.2 "Purge" | NVMe Base Spec 2.0/2.1
 #               ISO/IEC 27040:2015 Storage Security | Common Criteria EAL4+
 #
 # PURPOSE:
