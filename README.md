@@ -651,6 +651,8 @@ For licensing enquiries, use the subject line "AAD-50 Licence Permission Request
 
 Contributions and hardware testing reports are welcome. The highest priority areas are:
 
+> **nvme-cli v3.0-b.1 users:** If you are using the new `--wait` or `--repeat N` flags in nvme-cli v3.0-b.1 — the verification architecture that originated from RFC #3415 and this project — please consider reporting your hardware results here. Drive model, manufacturer, OS, and whether SSTAT polling behaved as expected. Every report directly contributes to the empirical foundation of the AAD-50 specification. Open a GitHub Issue at https://github.com/yonasabeselom/aad50/issues or contact directly at yonas_abeselom@protonmail.com.
+
 - **USB enclosure testing (v1.1)** — if you run AAD-50 on an NVMe drive inside a USB enclosure on either Linux or Windows, please open a GitHub Issue with your enclosure model, bridge chip (ASMedia/Realtek/JMicron), OS, which Tier was detected, and whether all 50 cycles completed. This directly contributes to validating USB passthrough support across bridge chips.
 - **Windows Beta hardware testing** — if you run `aad50_abeselom_windows.py` on a real NVMe drive, please open a GitHub Issue with your drive model, Windows version, and whether the sequence completed successfully. Every test result directly contributes to validating the specification across manufacturers.
 - **Linux driver compatibility** — reports of drives where Log Page 0x81 polling behaves unexpectedly are valuable for improving SSTAT handling.
