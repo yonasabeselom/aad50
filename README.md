@@ -5,6 +5,18 @@
 </p>
 
 <p align="center">
+  <a href="https://doi.org/10.5281/zenodo.20839417">
+    <img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20839417-blue" alt="Zenodo DOI"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/wiki">
+    <img src="https://img.shields.io/badge/Wiki-Documentation-informational" alt="Wiki"/>
+  </a>
+  <a href="https://github.com/linux-nvme/nvme-cli/pull/3438">
+    <img src="https://img.shields.io/badge/nvme--cli-PR%20%233438%20Merged-brightgreen" alt="nvme-cli PR #3438 Merged"/>
+  </a>
+</p>
+
+<p align="center">
   <a href="https://github.com/yonasabeselom/aad50/stargazers">
     <img src="https://img.shields.io/github/stars/yonasabeselom/aad50?style=social" alt="GitHub Stars"/>
   </a>
@@ -29,6 +41,7 @@
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 
 **Website:** https://aad50.com  
+**Wiki:** https://github.com/yonasabeselom/aad50/wiki  
 **Whitepaper DOI:** https://doi.org/10.5281/zenodo.20839417  
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom  
@@ -659,6 +672,8 @@ Contributions and hardware testing reports are welcome. The highest priority are
 - **Technical peer review** — open a GitHub Issue for any corrections or improvements to the protocol specification, struct layout, or phase ordering rationale.
 
 Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or contact directly at **yonas_abeselom@protonmail.com**.
+
+Full documentation, quick start guide, FAQ, and hardware test report template are available in the **[Wiki](https://github.com/yonasabeselom/aad50/wiki)**.
 
 ---
 
