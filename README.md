@@ -675,6 +675,8 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 Full documentation, quick start guide, FAQ, and hardware test report template are available in the **[Wiki](https://github.com/yonasabeselom/aad50/wiki)**.
 
+**Hardware Validation Programme:** If you have an NVMe drive you are retiring, contribute a test report to **[Issue #3 — Hardware Validation Programme](https://github.com/yonasabeselom/aad50/issues/3)**. Results feed directly into the USENIX FAST '27 empirical validation programme.
+
 ---
 
 ## Changelog
