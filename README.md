@@ -663,6 +663,14 @@ Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or
 
 ---
 
+## Enterprise Edition
+
+For ITAD companies and enterprises needing multi-drive fleet sanitization,
+PDF Certificates of Destruction with QR codes, batch reports, and
+professional compliance documentation — visit [aad50.com](https://aad50.com).
+
+---
+
 ## Changelog
 
 ### v1.1 — June 26, 2026
