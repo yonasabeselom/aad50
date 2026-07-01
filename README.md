@@ -5,18 +5,6 @@
 </p>
 
 <p align="center">
-  <a href="https://doi.org/10.5281/zenodo.20839417">
-    <img src="https://img.shields.io/badge/DOI-10.5281%2Fzenodo.20839417-blue" alt="Zenodo DOI"/>
-  </a>
-  <a href="https://github.com/yonasabeselom/aad50/wiki">
-    <img src="https://img.shields.io/badge/Wiki-Documentation-informational" alt="Wiki"/>
-  </a>
-  <a href="https://github.com/linux-nvme/nvme-cli/pull/3438">
-    <img src="https://img.shields.io/badge/nvme--cli-PR%20%233438%20Merged-brightgreen" alt="nvme-cli PR #3438 Merged"/>
-  </a>
-</p>
-
-<p align="center">
   <a href="https://github.com/yonasabeselom/aad50/stargazers">
     <img src="https://img.shields.io/github/stars/yonasabeselom/aad50?style=social" alt="GitHub Stars"/>
   </a>
@@ -29,8 +17,11 @@
   <a href="https://github.com/yonasabeselom/aad50/releases">
     <img src="https://img.shields.io/github/v/release/yonasabeselom/aad50" alt="Latest Release"/>
   </a>
-  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/licence-Proprietary-red" alt="Licence"/>
+  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE.txt">
+    <img src="https://img.shields.io/badge/code%20licence-Apache%202.0-blue" alt="Code Licence"/>
+  </a>
+  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE.txt">
+    <img src="https://img.shields.io/badge/spec%20licence-Proprietary-red" alt="Spec Licence"/>
   </a>
 </p>
 
@@ -41,7 +32,6 @@
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 
 **Website:** https://aad50.com  
-**Wiki:** https://github.com/yonasabeselom/aad50/wiki  
 **Whitepaper DOI:** https://doi.org/10.5281/zenodo.20839417  
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom  
@@ -648,15 +638,15 @@ AAD-50 occupies the correct engineering position: **faster than any software mul
 
 ## License
 
-AAD-50 uses a dual proprietary licence — see [LICENSE.txt](./LICENSE.txt) for full terms.
+AAD-50 uses a dual licence — see [LICENSE.txt](./LICENSE.txt) for full terms.
+
+**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`, `REDACT.py`) — **Apache License 2.0.** You may use, modify, redistribute, fork, and build on the code freely, including for commercial purposes, subject to the standard Apache 2.0 conditions (retain the copyright notice and license, state significant changes). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
 
 **Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — Proprietary, all rights reserved. You may read, study, reference, and cite the specification, and share it in its original unmodified form with attribution to Yonas Abeselom and a link to this repository. You may implement the AAD-50 protocol in your own original code for personal, non-commercial use. Modifying, adapting, or creating derivative works of the specification, incorporating it into a commercial product, or using the AAD-50 name/branding requires prior written permission.
 
-**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`) — Proprietary, all rights reserved. You may view the source for educational/research purposes and run the software on hardware you own for personal, non-commercial use. Redistribution, modification, derivative works, forking as a standalone or competing project, and commercial use all require prior written permission from the author.
+The specification is governed by the laws of Ethiopia and protected internationally under the Berne Convention, TRIPS, and the WIPO Copyright Treaty. The source code is governed by the terms of the Apache License 2.0.
 
-Both parts are governed by the laws of Ethiopia and protected internationally under the Berne Convention, TRIPS, and the WIPO Copyright Treaty.
-
-For licensing enquiries, use the subject line "AAD-50 Licence Permission Request": **yonas_abeselom@protonmail.com**
+For specification licensing enquiries, use the subject line "AAD-50 Licence Permission Request": **yonas_abeselom@protonmail.com**
 
 ---
 
@@ -664,18 +654,12 @@ For licensing enquiries, use the subject line "AAD-50 Licence Permission Request
 
 Contributions and hardware testing reports are welcome. The highest priority areas are:
 
-> **nvme-cli v3.0-b.1 users:** If you are using the new `--wait` or `--repeat N` flags in nvme-cli v3.0-b.1 — the verification architecture that originated from RFC #3415 and this project — please consider reporting your hardware results here. Drive model, manufacturer, OS, and whether SSTAT polling behaved as expected. Every report directly contributes to the empirical foundation of the AAD-50 specification. Open a GitHub Issue at https://github.com/yonasabeselom/aad50/issues or contact directly at yonas_abeselom@protonmail.com.
-
 - **USB enclosure testing (v1.1)** — if you run AAD-50 on an NVMe drive inside a USB enclosure on either Linux or Windows, please open a GitHub Issue with your enclosure model, bridge chip (ASMedia/Realtek/JMicron), OS, which Tier was detected, and whether all 50 cycles completed. This directly contributes to validating USB passthrough support across bridge chips.
 - **Windows Beta hardware testing** — if you run `aad50_abeselom_windows.py` on a real NVMe drive, please open a GitHub Issue with your drive model, Windows version, and whether the sequence completed successfully. Every test result directly contributes to validating the specification across manufacturers.
 - **Linux driver compatibility** — reports of drives where Log Page 0x81 polling behaves unexpectedly are valuable for improving SSTAT handling.
 - **Technical peer review** — open a GitHub Issue for any corrections or improvements to the protocol specification, struct layout, or phase ordering rationale.
 
 Please open a GitHub Issue at `https://github.com/yonasabeselom/aad50/issues` or contact directly at **yonas_abeselom@protonmail.com**.
-
-Full documentation, quick start guide, FAQ, and hardware test report template are available in the **[Wiki](https://github.com/yonasabeselom/aad50/wiki)**.
-
-**Hardware Validation Programme:** If you have an NVMe drive you are retiring, contribute a test report to **[Issue #3 — Hardware Validation Programme](https://github.com/yonasabeselom/aad50/issues/3)**. Results feed directly into the USENIX FAST '27 empirical validation programme.
 
 ---
 
