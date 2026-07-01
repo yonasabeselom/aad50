@@ -1,13 +1,16 @@
-AAD-50 PROPRIETARY LICENCE
-===========================
+AAD-50 DUAL LICENCE
+====================
 
 Copyright (c) 2026, Yonas Abeselom (yonas_abeselom@protonmail.com)
-All rights reserved.
+All rights reserved except where explicitly granted below.
 
 Yonas Abeselom is the sole author, owner, and rights holder of
 The Abeselom ASIC-Direct 50 (AAD-50) — including the specification,
 whitepaper, source code, GUI application, user manual, and all
 associated documentation and assets in this repository.
+
+This repository uses TWO SEPARATE LICENCES for two separate categories
+of material. Read the section that applies to what you intend to use.
 
 ================================================================================
 PART 1 — THE SPECIFICATION AND WHITEPAPER
@@ -15,6 +18,8 @@ PART 1 — THE SPECIFICATION AND WHITEPAPER
 The_Unaudited_Drive.pdf, README.md, and all specification documentation
 in this repository)
 ================================================================================
+
+PROPRIETARY — ALL RIGHTS RESERVED
 
 1. PERMITTED USE — NO WRITTEN PERMISSION REQUIRED
    You may:
@@ -49,53 +54,58 @@ in this repository)
 ================================================================================
 PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
 (Applies to: aad50_abeselom.py, aad50_abeselom_windows.py,
-aad50_gui_windows.py, AAD50.exe, and all Python source files in this repository)
+aad50_gui_windows.py, AAD50.exe, REDACT.py, and all Python source files
+in this repository)
 ================================================================================
 
-PROPRIETARY LICENCE — ALL RIGHTS RESERVED
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
 
-1. PERMITTED USE — NO WRITTEN PERMISSION REQUIRED
-   You may:
-   - View and read the source code for educational and research purposes
-   - Run the software on hardware you own for personal, non-commercial use
-   - Reference the code in academic papers, provided you cite the original
-     author and repository
+    http://www.apache.org/licenses/LICENSE-2.0
 
-2. RESTRICTIONS — WRITTEN PERMISSION REQUIRED
-   You may NOT, without prior written permission from Yonas Abeselom:
-   - Redistribute, publish, or share the source code in any form
-   - Modify, adapt, or create derivative works based on the source code
-   - Incorporate the source code into any other software product
-   - Use the source code for any commercial purpose
-   - Fork this repository and publish a modified version publicly
-   - Use the source code as the basis for a competing product or service
-   - Remove or alter any copyright, authorship, or licence notices
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
 
-3. FORKS AND MODIFICATIONS
-   GitHub's platform allows forking for the purpose of submitting
-   pull requests or studying the code. Any public fork must:
-   - Retain this licence in full
-   - Not be used as a basis for a competing or derivative product
-   - Not be published or distributed as a standalone project
-   If you wish to modify AAD-50 for any purpose beyond personal study,
-   you must obtain written permission from Yonas Abeselom before doing so.
-   Contact: yonas_abeselom@protonmail.com
+In plain terms, this means for the source code listed above, you may:
+   - Use it for any purpose, including commercial use
+   - Modify it and create derivative works
+   - Redistribute original or modified versions
+   - Fork the repository and publish your own modified version
+   - Sublicense it as part of a larger work
 
-4. HOW TO REQUEST PERMISSION
-   To request written permission for any use not covered above:
+Subject to the standard Apache 2.0 conditions: retain the copyright
+notice and this license, state significant changes you made, and
+include the NOTICE file if one is present. Apache 2.0 also grants an
+explicit patent licence from contributors and includes a defensive
+patent-termination clause. Full text: http://www.apache.org/licenses/LICENSE-2.0
+
+The "AAD-50" name and logo are NOT covered by this code licence and
+remain the property of Yonas Abeselom. You may fork and modify the
+code freely, but published forks may not use the "AAD-50" name or
+logo in a way that implies official endorsement or origin without
+written permission.
+
+4. HOW TO REQUEST PERMISSION (Part 1 material only)
+   To request written permission for any specification use not covered
+   above:
    - Email: yonas_abeselom@protonmail.com
-   - Subject: AAD-50 Licence Permission Request
+   - Subject: "AAD-50 Licence Permission Request"
    - Describe: your intended use, organisation, and purpose
    The author will respond within 14 business days. Permission may be
    granted free of charge for academic, research, or non-profit use.
    Commercial use requires a separate licence agreement.
 
 5. CONTRIBUTIONS AND PEER REVIEW
-   Technical feedback, bug reports, and peer review submitted via GitHub
-   Issues are welcome and encouraged. Submitting feedback does not grant
-   the submitter any rights over the source code or specification.
-   The author retains full ownership of all contributions incorporated
-   into the project.
+   Technical feedback, bug reports, and pull requests submitted via
+   GitHub are welcome and encouraged. By submitting a contribution to
+   the source code (Part 2), you agree it is licensed under Apache 2.0
+   along with the rest of the project. Contributions to the
+   specification or whitepaper (Part 1) do not transfer any rights;
+   the author retains full ownership of Part 1 material.
 
 6. HARDWARE TESTING
    If you test this software on real NVMe hardware, you are encouraged
@@ -104,97 +114,32 @@ PROPRIETARY LICENCE — ALL RIGHTS RESERVED
    Reporting results is voluntary and does not transfer any rights.
 
 7. FUTURE LICENSING
-   The author reserves the right to offer the source code under
-   alternative licence terms (including commercial licences) at any time.
-   Such changes do not affect previously granted permissions.
+   The author reserves the right to offer future versions of the
+   specification (Part 1) under alternative terms at any time. Source
+   code (Part 2) already released under Apache 2.0 remains under
+   Apache 2.0 permanently for any copy already distributed — this is
+   a standard, irrevocable property of open-source licensing and
+   applies to versions released from this point forward.
 
-8. ENFORCEMENT
+8. ENFORCEMENT (Part 1 material only)
    Unauthorised use, modification, distribution, or commercialisation
-   of AAD-50 — including the specification, source code, and all
-   associated materials — constitutes copyright infringement and may
-   result in legal action. The author's rights are protected under
-   international copyright law including the Berne Convention.
+   of the specification or whitepaper constitutes copyright
+   infringement and may result in legal action. The author's rights
+   over Part 1 material are protected under international copyright
+   law including the Berne Convention.
 
 ================================================================================
 GOVERNING LAW AND JURISDICTION
 ================================================================================
 
-1. AUTHOR'S LOCATION AND GOVERNING LAW
-   The author, Yonas Abeselom, is domiciled in Addis Ababa, Federal
-   Democratic Republic of Ethiopia. This licence is governed by and
-   construed in accordance with the laws of Ethiopia, including:
+Part 1 (Specification and Whitepaper) is governed by the laws of
+Ethiopia and protected internationally under the Berne Convention,
+TRIPS, and the WIPO Copyright Treaty.
 
-   - The Copyright and Neighbouring Rights Protection Proclamation
-     No. 410/2004 of the Federal Democratic Republic of Ethiopia
-   - The Ethiopian Intellectual Property Office (EIPO) regulations
-
-2. ETHIOPIAN COPYRIGHT PROTECTIONS
-   Under Ethiopian Proclamation No. 410/2004:
-   - Copyright protection arises automatically upon creation of the work
-   - No registration is required for copyright to be valid and enforceable
-   - The author holds exclusive economic and moral rights over the work
-   - Moral rights — including the right to be identified as the author
-     and the right to object to derogatory treatment — are perpetual
-     and cannot be transferred or waived
-   - Economic rights are protected for the life of the author plus
-     50 years after death
-
-3. INTERNATIONAL TREATY PROTECTIONS
-   AAD-50 is protected under the following international treaties
-   to which Ethiopia is a signatory or which apply by operation of law:
-
-   - The Berne Convention for the Protection of Literary and Artistic
-     Works (1886, as amended) — automatically protects this work in
-     all 181 member countries without registration requirement
-   - The Agreement on Trade-Related Aspects of Intellectual Property
-     Rights (TRIPS Agreement) — enforced through WTO membership,
-     requiring all WTO member states to provide minimum copyright
-     protections
-   - The WIPO Copyright Treaty (WCT) — extending protections to
-     digital works and software
-
-4. INTERNATIONAL ENFORCEMENT
-   By virtue of the Berne Convention, this copyright is automatically
-   recognised and enforceable in all 181 member countries without any
-   additional registration — including the United States, United Kingdom,
-   European Union member states, Germany, France, Australia, Canada,
-   Japan, South Korea, Israel, Singapore, India, and China.
-
-   Any person or entity infringing this copyright in any Berne
-   Convention member country is subject to the copyright laws of
-   that country, which may include civil damages, injunctive relief,
-   and criminal penalties.
-
-5. DISPUTE RESOLUTION
-   In the event of a dispute arising from this licence:
-   - The author reserves the right to pursue legal remedies in
-     the jurisdiction where the infringement occurred
-   - The author also reserves the right to pursue remedies under
-     Ethiopian law in Ethiopian courts
-   - Nothing in this licence limits the author's right to seek
-     injunctive relief in any jurisdiction to prevent ongoing infringement
-
-6. SEVERABILITY
-   If any provision of this licence is found to be unenforceable
-   under applicable law, that provision shall be modified to the
-   minimum extent necessary to make it enforceable, and all other
-   provisions shall remain in full force and effect.
-
-================================================================================
-
-9. NO WARRANTY
-   THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
-   EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
-   MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, AND
-   NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
-   CLAIM, DAMAGES, OR OTHER LIABILITY ARISING FROM THE USE OF THIS
-   SOFTWARE.
-
-10. DATA DESTRUCTION WARNING
-    THIS SOFTWARE IS DESIGNED TO PERMANENTLY AND IRREVERSIBLY DESTROY
-    ALL DATA ON THE TARGET DEVICE. THE AUTHOR ACCEPTS NO LIABILITY FOR
-    DATA LOSS RESULTING FROM THE USE OR MISUSE OF THIS SOFTWARE. USE
-    ONLY ON DEVICES YOU OWN AND INTEND TO FULLY ERASE.
+Part 2 (Source Code) is licensed under Apache License 2.0, which is
+governed by its own terms as published by the Apache Software
+Foundation and is not subject to additional jurisdictional
+restriction by the author.
 
 ================================================================================
 CONTACT FOR LICENSING ENQUIRIES AND PERMISSION REQUESTS
@@ -204,7 +149,7 @@ CONTACT FOR LICENSING ENQUIRIES AND PERMISSION REQUESTS
   yonas_abeselom@protonmail.com
   https://github.com/yonasabeselom/aad50
 
-  For permission requests, use subject line:
+  For Part 1 (specification) permission requests, use subject line:
   "AAD-50 Licence Permission Request"
 
 ================================================================================
@@ -217,11 +162,3 @@ If you reference AAD-50 in academic or technical work, please cite as:
   50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
   Version 1.1, June 2026.
   [Online]. Available: https://github.com/yonasabeselom/aad50
-
-If you reference the plain-language companion publication, please cite as:
-
-  Y. Abeselom, "The Unaudited Drive: Why No One Has Verified That Your
-  NVMe Sanitize Firmware Actually Works," June 2026.
-  [Online]. Available: https://github.com/yonasabeselom/aad50
-
-================================================================================
