@@ -513,7 +513,7 @@ Includes profiles of all six researchers behind the two foundational papers (Wei
 
 ### REDACT 3 — Windows Privacy Cleaner & Forensic Trace Eliminator
 
-A standalone Windows privacy cleaning utility included in the [`tools/`](tools/) folder of this repository. REDACT 3 is a hardened production release — a major upgrade over previous versions.
+A standalone Windows privacy cleaning utility with its own dedicated repository. REDACT 3 is a hardened production release — a major upgrade over previous versions.
 
 📦 **[Download on SourceForge](https://sourceforge.net/projects/redact/)** &nbsp;|&nbsp; 🐙 **[Dedicated GitHub Repository](https://github.com/yonasabeselom/redact)**
 
@@ -648,7 +648,7 @@ AAD-50 occupies the correct engineering position: **faster than any software mul
 
 AAD-50 uses a dual licence — see [LICENSE](./LICENSE) for full terms.
 
-**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`, `REDACT.py`) — **GNU General Public License (GPL).** You may use, modify, redistribute, fork, and build on the code freely under the terms of the GPL. Any derivative works or software that incorporates this code must also be released under the GPL (copyleft). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
+**Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`) — **GNU General Public License (GPL).** You may use, modify, redistribute, fork, and build on the code freely under the terms of the GPL. Any derivative works or software that incorporates this code must also be released under the GPL (copyleft). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
 
 **Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — Proprietary, all rights reserved. You may read, study, reference, and cite the specification, and share it in its original unmodified form with attribution to Yonas Abeselom and a link to this repository. You may implement the AAD-50 protocol in your own original code for personal, non-commercial use. Modifying, adapting, or creating derivative works of the specification, incorporating it into a commercial product, or using the AAD-50 name/branding requires prior written permission.
 
