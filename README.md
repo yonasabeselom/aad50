@@ -642,7 +642,7 @@ AAD-50 occupies the correct engineering position: **faster than any software mul
 
 ## License
 
-AAD-50 uses a dual licence — see [LICENSE.txt](./LICENSE.txt) for full terms.
+AAD-50 uses a dual licence — see [LICENSE](./LICENSE) for full terms.
 
 **Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`, `REDACT.py`) — **GNU General Public License (GPL).** You may use, modify, redistribute, fork, and build on the code freely under the terms of the GPL. Any derivative works or software that incorporates this code must also be released under the GPL (copyleft). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
 
