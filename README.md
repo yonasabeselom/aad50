@@ -23,6 +23,9 @@
   <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/spec%20licence-Proprietary-red" alt="Spec Licence"/>
   </a>
+  <a href="https://sourceforge.net/projects/aad50/">
+    <img src="https://img.shields.io/badge/SourceForge-aad50-orange?logo=sourceforge" alt="SourceForge"/>
+  </a>
 </p>
 
 <p align="center">
@@ -32,6 +35,7 @@
 ### Firmware-Enforced Flash Sanitization Specification for NVMe Solid-State Storage
 
 **Website:** https://aad50.com  
+**SourceForge:** https://sourceforge.net/projects/aad50/  
 **Whitepaper DOI:** https://doi.org/10.5281/zenodo.20839417  
 **Author:** Yonas Abeselom — BSc Computer Science | Diploma in Information Technology  
 **Contact:** yonas_abeselom@protonmail.com | https://github.com/yonasabeselom  
