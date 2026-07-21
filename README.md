@@ -17,10 +17,10 @@
   <a href="https://github.com/yonasabeselom/aad50/releases">
     <img src="https://img.shields.io/github/v/release/yonasabeselom/aad50" alt="Latest Release"/>
   </a>
-  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE.txt">
+  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/code%20licence-GPL%20v3-blue" alt="Code Licence"/>
   </a>
-  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE.txt">
+  <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
     <img src="https://img.shields.io/badge/spec%20licence-Proprietary-red" alt="Spec Licence"/>
   </a>
 </p>
