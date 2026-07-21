@@ -1,0 +1,168 @@
+AAD-50 DUAL LICENCE
+====================
+
+Copyright (c) 2026, Yonas Abeselom (yonas_abeselom@protonmail.com)
+All rights reserved except where explicitly granted below.
+
+Yonas Abeselom is the sole author, owner, and rights holder of
+The Abeselom ASIC-Direct 50 (AAD-50) — including the specification,
+whitepaper, source code, GUI application, user manual, and all
+associated documentation and assets in this repository.
+
+This repository uses TWO SEPARATE LICENCES for two separate categories
+of material. Read the section that applies to what you intend to use.
+
+================================================================================
+PART 1 — THE SPECIFICATION AND WHITEPAPER
+(Applies to: AAD50_Abeselom_Whitepaper.pdf, AAD50_User_Manual.pdf,
+The_Unaudited_Drive.pdf, README.md, and all specification documentation
+in this repository)
+================================================================================
+
+PROPRIETARY — ALL RIGHTS RESERVED
+
+1. PERMITTED USE — NO WRITTEN PERMISSION REQUIRED
+   You may:
+   - Read, study, and reference the specification for personal,
+     educational, or research purposes
+   - Share the specification in its ORIGINAL UNMODIFIED form, provided
+     you credit Yonas Abeselom as the original author and include a
+     link to https://github.com/yonasabeselom/aad50
+   - Cite the specification in academic or technical papers using the
+     citation format provided at the end of this document
+   - Implement the AAD-50 protocol in your own original code for
+     personal, non-commercial use
+
+2. RESTRICTIONS — WRITTEN PERMISSION REQUIRED
+   You may NOT, without prior written permission from Yonas Abeselom:
+   - Modify, adapt, translate, or create derivative works based on
+     the specification or whitepaper
+   - Incorporate the specification or protocol into any commercial
+     product, service, or offering
+   - Publish or distribute a modified version of the specification
+     under the AAD-50 name or any confusingly similar name
+   - Use the AAD-50 name, logo, or branding in any product or
+     service without written authorisation
+   - Claim authorship or co-authorship of the specification
+   - Remove or alter any copyright, authorship, or attribution notices
+
+3. COMMERCIAL LICENSING
+   Any commercial use of the specification, protocol, or any derivative
+   work requires a separate written commercial licence agreement with
+   Yonas Abeselom. Contact: yonas_abeselom@protonmail.com
+
+================================================================================
+PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
+(Applies to: aad50_abeselom.py, aad50_abeselom_windows.py,
+aad50_gui_windows.py, AAD50.exe, REDACT.py, and all Python source files
+in this repository)
+================================================================================
+
+Licensed under the GNU General Public License (GPL), Version 3
+(or, at your option, any later version).
+You may obtain a copy of the License at
+
+    https://www.gnu.org/licenses/gpl-3.0.html
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+GNU General Public License for more details.
+
+In plain terms, this means for the source code listed above, you may:
+   - Use it for any purpose
+   - Modify it and create derivative works
+   - Redistribute original or modified versions
+   - Fork the repository and publish your own modified version
+
+COPYLEFT REQUIREMENT: Any modified version or derivative work that
+you distribute MUST also be released under the GPL. You may NOT
+incorporate this code into a closed-source or proprietary product.
+This ensures that all improvements and derivatives remain open source.
+
+Full licence text: https://www.gnu.org/licenses/gpl-3.0.html
+
+The "AAD-50" name and logo are NOT covered by this code licence and
+remain the property of Yonas Abeselom. You may fork and modify the
+code freely, but published forks may not use the "AAD-50" name or
+logo in a way that implies official endorsement or origin without
+written permission.
+
+4. HOW TO REQUEST PERMISSION (Part 1 material only)
+   To request written permission for any specification use not covered
+   above:
+   - Email: yonas_abeselom@protonmail.com
+   - Subject: "AAD-50 Licence Permission Request"
+   - Describe: your intended use, organisation, and purpose
+   The author will respond within 14 business days. Permission may be
+   granted free of charge for academic, research, or non-profit use.
+   Commercial use requires a separate licence agreement.
+
+5. CONTRIBUTIONS AND PEER REVIEW
+   Technical feedback, bug reports, and pull requests submitted via
+   GitHub are welcome and encouraged. By submitting a contribution to
+   the source code (Part 2), you agree it is licensed under GPL v3
+   along with the rest of the project. Contributions to the
+   specification or whitepaper (Part 1) do not transfer any rights;
+   the author retains full ownership of Part 1 material.
+
+6. HARDWARE TESTING
+   If you test this software on real NVMe hardware, you are encouraged
+   to report your results via GitHub Issues at:
+   https://github.com/yonasabeselom/aad50/issues
+   Reporting results is voluntary and does not transfer any rights.
+
+7. FUTURE LICENSING
+   The author reserves the right to offer future versions of the
+   specification (Part 1) under alternative terms at any time. Source
+   code (Part 2) already released under GPL v3 remains under
+   GPL v3 permanently for any copy already distributed — this is
+   a standard, irrevocable property of open-source licensing and
+   applies to versions released from this point forward.
+
+8. ENFORCEMENT (Part 1 material only)
+   Unauthorised use, modification, distribution, or commercialisation
+   of the specification or whitepaper constitutes copyright
+   infringement and may result in legal action. The author's rights
+   over Part 1 material are protected under international copyright
+   law including the Berne Convention.
+
+================================================================================
+GOVERNING LAW AND JURISDICTION
+================================================================================
+
+Part 1 (Specification and Whitepaper) is governed by the laws of
+Ethiopia and protected internationally under the Berne Convention,
+TRIPS, and the WIPO Copyright Treaty.
+
+Part 2 (Source Code) is licensed under the GNU General Public License
+(GPL) v3, governed by its own terms as published by the Free Software
+Foundation and is not subject to additional jurisdictional restriction
+by the author.
+
+================================================================================
+CONTACT FOR LICENSING ENQUIRIES AND PERMISSION REQUESTS
+================================================================================
+
+  Yonas Abeselom — Sole Author and Rights Holder
+  yonas_abeselom@protonmail.com
+  https://github.com/yonasabeselom/aad50
+
+  For Part 1 (specification) permission requests, use subject line:
+  "AAD-50 Licence Permission Request"
+
+================================================================================
+CITATION
+================================================================================
+
+If you reference AAD-50 in academic or technical work, please cite as:
+
+  Y. Abeselom, "The Abeselom ASIC-Direct 50 (AAD-50): A Firmware-Enforced,
+  50-Cycle Sanitization Specification for NVMe Solid-State Storage Media,"
+  Version 1.1, June 2026.
+  [Online]. Available: https://github.com/yonasabeselom/aad50
