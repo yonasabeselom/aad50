@@ -518,19 +518,20 @@ A standalone Windows privacy cleaning utility with its own dedicated repository.
 
 📦 **[Download on SourceForge](https://sourceforge.net/projects/redact/)** &nbsp;|&nbsp; 🐙 **[Dedicated GitHub Repository](https://github.com/yonasabeselom/redact)**
 
-- **250 cleanup items** across 3 sensitivity tiers (LOW / MEDIUM / HIGH) plus a Safe Mode preset — up from 100 items in previous versions
-- **4 NVMe/SSD-optimised wipe modes:**
-  - Single-pass NVMe (cryptographically random — fast, everyday use)
-  - NIST SP 800-88 (3-pass — aligned with current NIST media sanitization guidelines)
-  - 7-pass DoD (DoD 5220.22-M adapted for flash storage)
-  - 35-pass Gutmann-NVMe (NVMe-adapted Gutmann pattern matrix with 26 random passes)
-- **TRIM issued after every cleaning run** — signals the NVMe controller to physically erase deallocated blocks at the firmware level, closing the FTL gap that standard file deletion leaves open
-- **Zero-Footprint Blind Execution RAM-Secure Architecture** — operations leave no recoverable trace of the cleaning process itself
-- **Anti-Forensic Time-Spoofing & File Cliff Protection** — registry LastWrite timestamps are spoofed after key deletion; sequential overwrite padding prevents file cliff detection by forensic tools
-- **Full registry backup** to Desktop before any cleaning begins — automatic rollback snapshot for every run
-- **Rollback recovery folder** — files are staged to Desktop before destruction
+- **250 sanitization targets** across 3 sensitivity tiers (LOW / MEDIUM / HIGH) plus a Safe Selection preset
+- **4 wipe standards:**
+  - 1-Pass Quick (SSD-optimised, cryptographically random)
+  - NIST SP 800-88 (3-pass)
+  - 7-Pass DoD 5220.22-M
+  - 35-Pass Gutmann
+- **Transient Execution Splitting** — clones to a randomised process name on launch, reducing visibility in Prefetch and BAM
+- **NTFS File Cliff Masking** — writes and immediately deletes dummy files after each wipe batch to obscure deletion spikes in NTFS metadata
+- **Registry LastWrite Spoofing** — rolls parent key timestamps forward before deletion to mask erasure events
+- **10-browser coverage** — Chrome, Edge, Firefox, Brave, Vivaldi, Arc, Zen, Pale Moon, Tor, Comet
+- **Windows Recall / CoreAI destruction** — permanently deletes the AI screenshot store and semantic timeline SQLite database
+- **Deep forensic artifact removal** — AmCache, ShimCache, BAM, NTFS $UsnJrnl, $LogFile, Shell Bags, UserAssist, SRUM database, USB device history
 - **Windows 11 Fluent Dark UI** — per-item toggle switches across tier-grouped cards
-- **Cleaning report** saved to Desktop after every run — full chain-of-custody log
+- **No external dependencies** — pure Python standard library
 
 > **REDACT 3** handles OS-level privacy cleaning (files, caches, registry traces, browser history, credentials, forensic artefacts).  
 > **AAD-50** handles firmware-level NVMe drive sanitization (all NAND cells including over-provisioned zones, FTL mapping, cryptographic keys).  
