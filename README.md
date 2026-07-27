@@ -48,7 +48,7 @@
 
 The Abeselom ASIC-Direct 50 (AAD-50) is a firmware-enforced, 50-cycle data sanitization specification designed explicitly for NVMe solid-state drives. By leveraging low-level IOCTL pass-through structures to communicate directly with the on-drive ASIC, AAD-50 bypasses the operating-system filesystem layer entirely. The protocol executes a deterministic three-phase destruction matrix — physical NAND cell overwrite, Flash Translation Layer index teardown, and cryptographic key destruction — each cycle gated by active polling of NVMe Log Page 0x81 (Sanitize Status) to guarantee hardware-confirmed completion before the next cycle is issued.
 
-The result is a probabilistically modelled, high-assurance sanitization protocol designed to defeat all currently known digital and analog forensic recovery techniques — fully auditable via SHA-256 tamper-evident chain-of-custody, and designed to align with NIST SP 800-88 Rev. 2 Purge classification and the NVMe Base Specification 2.0/2.1 Sanitize command set.
+The result is a probabilistically modelled, high-assurance sanitization protocol designed to defeat all currently known digital and analog forensic recovery techniques — fully auditable via SHA-256 tamper-evident chain-of-custody, and designed to align with NIST SP 800-88 Rev. 2 Purge classification, the NVMe Base Specification 2.0/2.1 Sanitize command set, and IEEE 2883.1-2025 — IEEE Recommended Practice for Use of Storage Sanitization Methods.
 
 ---
 
@@ -363,7 +363,7 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 - **Daniel Wagner / igaw** (nvme-cli Primary Maintainer) — merged PR #3438 into linux-nvme/nvme-cli master on June 16, 2026 (merge commit `84078fa`). Wagner is the primary maintainer of linux-nvme/nvme-cli (1.8k stars, 718 forks) and linux-nvme/libnvme. His merge of the sanitize wait/repeat/SANICAP architecture represents formal acceptance of the verification gap identified in RFC #3415 into the official Linux NVMe toolchain. PR #3438 is explicitly listed in the **nvme-cli v3.0-b.1 release changelog** (June 26, 2026) — the feature is now shipping in a numbered release.
 - **hiyohiyo / CrystalDiskInfo** (Windows NVMe Tool, 2.9k stars, hundreds of millions of downloads) — RFC #308 opened June 17, 2026 proposing Log Page 0x81 sanitize completion verification for Windows — the Windows equivalent of nvme-cli RFC #3415. RFC: https://github.com/hiyohiyo/CrystalDiskInfo/issues/308
 - **gtrant / Eraser** (Windows secure file deletion tool, GNU GPL, actively maintained) — RFC #3 opened June 25, 2026 proposing native NVMe Sanitize command support with Log Page 0x81 completion verification as a drive-level erasure option. AAD-50 offered as reference implementation. RFC: https://github.com/gtrant/eraser/issues/3
-- **NVM Express** — internally reviewing the specification.
+- **NVM Express Administration (Kim Hobbs)** — reviewed the specification and confirmed that AAD-50's per-cycle verification architecture via Log Page 0x81 aligns with the recommended best practice for host-software sanitize verification. Referenced IEEE 2883.1-2025 as the applicable standard. Member companies reviewed the proposal (July 2026).
 
 Specific areas where further review is invited:
 
@@ -584,7 +584,7 @@ Planned improvements for future versions, several arising directly from peer rev
 - **NDAS = 1 enforcement (v1.2)** — explicitly set CDW11 bit 9 (No Deallocate After Sanitize) to guarantee immediate physical block deallocation, closing the lazy-deallocation gap identified during peer review.
 - **`--cycles N` flag** — allow operators to select a Phase B cycle count appropriate to their threat model and NAND geometry, rather than the fixed 40-cycle default. Discussed in the whitepaper (Section 4.2) as the mechanism for tailoring AAD-50's conservative engineering margin to specific deployment contexts.
 - **AAD-50-side SANICAP pre-flight check** — verify drive sanitize capability via the SANICAP field of the Identify Controller response before dispatching any cycle. Note: equivalent functionality has now landed in nvme-cli PR #3438 (merged June 16, 2026).
-- **IEEE 2883-2022 formal alignment** — conduct and document a formal evaluation against IEEE 2883-2022, the current international storage sanitization standard.
+- **IEEE 2883.1-2025 formal alignment** — conduct and document a formal evaluation against IEEE 2883.1-2025 — IEEE Recommended Practice for Use of Storage Sanitization Methods (2025). NVM Express Administration referenced this standard as the applicable recommended practice for host-software sanitize verification in correspondence with the author (July 2026).
 - **Expanded hardware validation** — testing across additional manufacturers, controller generations, and NAND geometries (MLC, TLC, QLC), tracked in Issue #3.
 
 ---
@@ -596,7 +596,7 @@ Planned improvements for future versions, several arising directly from peer rev
 | NIST SP 800-88 Rev. 2 | Purge classification for solid-state media |
 | NVMe Base Specification 2.0/2.1 | Sanitize command set (Opcode 0x84) |
 | ISO/IEC 27040:2015 | Storage security and chain-of-custody |
-| IEEE 2883-2022 | International standard for storage device sanitization |
+| IEEE 2883.1-2025 | IEEE Recommended Practice for Use of Storage Sanitization Methods (2025) |
 | Common Criteria EAL4+ | Data destruction assurance |
 
 ---
