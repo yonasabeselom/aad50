@@ -26,6 +26,9 @@
   <a href="https://sourceforge.net/projects/aad50/">
     <img src="https://img.shields.io/badge/SourceForge-aad50-orange?logo=sourceforge" alt="SourceForge"/>
   </a>
+  <a href="https://doi.org/10.5281/zenodo.20839417">
+    <img src="https://zenodo.org/badge/DOI/10.5281/zenodo.20839417.svg" alt="DOI"/>
+  </a>
 </p>
 
 <p align="center">
@@ -518,20 +521,19 @@ A standalone Windows privacy cleaning utility with its own dedicated repository.
 
 📦 **[Download on SourceForge](https://sourceforge.net/projects/redact/)** &nbsp;|&nbsp; 🐙 **[Dedicated GitHub Repository](https://github.com/yonasabeselom/redact)**
 
-- **250 sanitization targets** across 3 sensitivity tiers (LOW / MEDIUM / HIGH) plus a Safe Selection preset
-- **4 wipe standards:**
-  - 1-Pass Quick (SSD-optimised, cryptographically random)
-  - NIST SP 800-88 (3-pass)
-  - 7-Pass DoD 5220.22-M
-  - 35-Pass Gutmann
-- **Transient Execution Splitting** — clones to a randomised process name on launch, reducing visibility in Prefetch and BAM
-- **NTFS File Cliff Masking** — writes and immediately deletes dummy files after each wipe batch to obscure deletion spikes in NTFS metadata
-- **Registry LastWrite Spoofing** — rolls parent key timestamps forward before deletion to mask erasure events
-- **10-browser coverage** — Chrome, Edge, Firefox, Brave, Vivaldi, Arc, Zen, Pale Moon, Tor, Comet
-- **Windows Recall / CoreAI destruction** — permanently deletes the AI screenshot store and semantic timeline SQLite database
-- **Deep forensic artifact removal** — AmCache, ShimCache, BAM, NTFS $UsnJrnl, $LogFile, Shell Bags, UserAssist, SRUM database, USB device history
+- **250 cleanup items** across 3 sensitivity tiers (LOW / MEDIUM / HIGH) plus a Safe Mode preset — up from 100 items in previous versions
+- **4 NVMe/SSD-optimised wipe modes:**
+  - Single-pass NVMe (cryptographically random — fast, everyday use)
+  - NIST SP 800-88 (3-pass — aligned with current NIST media sanitization guidelines)
+  - 7-pass DoD (DoD 5220.22-M adapted for flash storage)
+  - 35-pass Gutmann-NVMe (NVMe-adapted Gutmann pattern matrix with 26 random passes)
+- **TRIM issued after every cleaning run** — signals the NVMe controller to physically erase deallocated blocks at the firmware level, closing the FTL gap that standard file deletion leaves open
+- **Zero-Footprint Blind Execution RAM-Secure Architecture** — operations leave no recoverable trace of the cleaning process itself
+- **Anti-Forensic Time-Spoofing & File Cliff Protection** — registry LastWrite timestamps are spoofed after key deletion; sequential overwrite padding prevents file cliff detection by forensic tools
+- **Full registry backup** to Desktop before any cleaning begins — automatic rollback snapshot for every run
+- **Rollback recovery folder** — files are staged to Desktop before destruction
 - **Windows 11 Fluent Dark UI** — per-item toggle switches across tier-grouped cards
-- **No external dependencies** — pure Python standard library
+- **Cleaning report** saved to Desktop after every run — full chain-of-custody log
 
 > **REDACT 3** handles OS-level privacy cleaning (files, caches, registry traces, browser history, credentials, forensic artefacts).  
 > **AAD-50** handles firmware-level NVMe drive sanitization (all NAND cells including over-provisioned zones, FTL mapping, cryptographic keys).  
@@ -652,7 +654,7 @@ AAD-50 uses a dual licence — see [LICENSE](./LICENSE) for full terms.
 
 **Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`) — **GNU General Public License (GPL).** You may use, modify, redistribute, fork, and build on the code freely under the terms of the GPL. Any derivative works or software that incorporates this code must also be released under the GPL (copyleft). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
 
-**Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — **Creative Commons Attribution 4.0 International (CC BY 4.0).** You are free to share and adapt this material for any purpose, including commercially, provided you give appropriate credit to Yonas Abeselom, include a link to the licence, and indicate if changes were made. The "AAD-50" name and logo are not covered by CC BY 4.0 and remain the author's property — published works may not imply official endorsement or origin without written permission. Cite as: Abeselom, Y. (2026). The Abeselom ASIC-Direct 50 (AAD-50). Zenodo. https://doi.org/10.5281/zenodo.20839417
+**Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — Proprietary, all rights reserved. You may read, study, reference, and cite the specification, and share it in its original unmodified form with attribution to Yonas Abeselom and a link to this repository. You may implement the AAD-50 protocol in your own original code for personal, non-commercial use. Modifying, adapting, or creating derivative works of the specification, incorporating it into a commercial product, or using the AAD-50 name/branding requires prior written permission.
 
 The specification is governed by the laws of Ethiopia and protected internationally under the Berne Convention, TRIPS, and the WIPO Copyright Treaty. The source code is governed by the terms of the GNU General Public License (GPL).
 
