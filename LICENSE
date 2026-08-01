@@ -1,4 +1,4 @@
-SPDX-License-Identifier: GPL-3.0-or-later
+SPDX-License-Identifier: GPL-3.0-or-later AND CC-BY-4.0
 
 AAD-50 DUAL LICENCE
 ====================
@@ -21,37 +21,45 @@ The_Unaudited_Drive.pdf, README.md, and all specification documentation
 in this repository)
 ================================================================================
 
-PROPRIETARY — ALL RIGHTS RESERVED
+CREATIVE COMMONS ATTRIBUTION 4.0 INTERNATIONAL (CC BY 4.0)
 
-1. PERMITTED USE — NO WRITTEN PERMISSION REQUIRED
-You may:
-- Read, study, and reference the specification for personal,
-  educational, or research purposes
-- Share the specification in its ORIGINAL UNMODIFIED form, provided
-  you credit Yonas Abeselom as the original author and include a
-  link to https://github.com/yonasabeselom/aad50
-- Cite the specification in academic or technical papers using the
-  citation format provided at the end of this document
-- Implement the AAD-50 protocol in your own original code for
-  personal, non-commercial use
+Licence: https://creativecommons.org/licenses/by/4.0/
+
+The whitepaper, specification documents, user manual, and README listed
+above are licensed under the Creative Commons Attribution 4.0 International
+Licence (CC BY 4.0). This means you are free to:
+
+- Share — copy and redistribute the material in any medium or format
+- Adapt — remix, transform, and build upon the material for any purpose,
+  even commercially
+
+UNDER THE FOLLOWING TERMS:
+
+1. ATTRIBUTION (REQUIRED — NO WRITTEN PERMISSION NEEDED)
+You MUST give appropriate credit to Yonas Abeselom as the original author,
+provide a link to the licence, and indicate if changes were made. You may
+do so in any reasonable manner, but not in any way that suggests the
+author endorses you or your use. Recommended citation format:
+
+  Abeselom, Y. (2026). The Abeselom ASIC-Direct 50 (AAD-50):
+  Firmware-Enforced Flash Sanitization Specification for NVMe
+  Solid-State Storage (Version 1.1). Zenodo.
+  https://doi.org/10.5281/zenodo.20839417
 
 2. RESTRICTIONS — WRITTEN PERMISSION REQUIRED
-You may NOT, without prior written permission from Yonas Abeselom:
-- Modify, adapt, translate, or create derivative works based on
-  the specification or whitepaper
-- Incorporate the specification or protocol into any commercial
-  product, service, or offering
-- Publish or distribute a modified version of the specification
-  under the AAD-50 name or any confusingly similar name
-- Use the AAD-50 name, logo, or branding in any product or
-  service without written authorisation
-- Claim authorship or co-authorship of the specification
-- Remove or alter any copyright, authorship, or attribution notices
+The following additional restrictions apply regardless of CC BY 4.0:
+- You may NOT use the "AAD-50" name, logo, or branding in any product
+  or service in a way that implies official endorsement or origin without
+  written permission from Yonas Abeselom
+- You may NOT claim authorship or co-authorship of the original
+  specification
+- You may NOT remove or alter any copyright, authorship, or attribution
+  notices
 
-3. COMMERCIAL LICENSING
-Any commercial use of the specification, protocol, or any derivative
-work requires a separate written commercial licence agreement with
-Yonas Abeselom. Contact: yonas_abeselom@protonmail.com
+3. COMMERCIAL USE OF THE SPECIFICATION
+CC BY 4.0 permits commercial use of the specification documents provided
+attribution is given. For commercial licensing of the AAD-50 name, logo,
+or branding, contact: yonas_abeselom@protonmail.com
 
 ================================================================================
 PART 2 — THE REFERENCE IMPLEMENTATION (SOURCE CODE)
