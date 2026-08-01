@@ -369,6 +369,16 @@ I am sharing the specification for The Abeselom ASIC-Direct 50 (AAD-50), a firmw
 - **gtrant / Eraser** (Windows secure file deletion tool, GNU GPL, actively maintained) — RFC #3 opened June 25, 2026 proposing native NVMe Sanitize command support with Log Page 0x81 completion verification as a drive-level erasure option. AAD-50 offered as reference implementation. RFC: https://github.com/gtrant/eraser/issues/3
 - **NVM Express Administration (Kim Hobbs)** — reviewed the specification and confirmed that AAD-50's per-cycle verification architecture via Log Page 0x81 aligns with the recommended best practice for host-software sanitize verification. Referenced IEEE 2883.1-2025 as the applicable standard. Member companies reviewed the proposal (July 2026).
 
+  In direct correspondence with the author (July 2026), Kim Hobbs of NVM Express Administration wrote:
+
+  > *"The recommended best practice is that host software manage the looping and validate the results of each sanitize using the Sanitize Status log page. Both your software, and the new nvme-cli `--wait` and `--repeat` flags look like they accomplish that goal."*
+  > — Kim Hobbs, NVM Express Administration, July 2026
+
+  > *"AAD-50 is a reference implementation of the model you propose. As such it doesn't appear to require any new capabilities from NVM Express."*
+  > — Kim Hobbs, NVM Express Administration, July 2026
+
+  NVM Express Administration also directed the author to **IEEE 2883.1-2025 — IEEE Recommended Practice for Use of Storage Sanitization Methods** (https://ieeexplore.ieee.org/document/11045273) as the applicable standard for host-software sanitize verification, confirming that AAD-50's architecture aligns with its guidance.
+
 Specific areas where further review is invited:
 
 - Correctness of the `nvme_admin_cmd` struct memory layout for the Linux kernel IOCTL interface
