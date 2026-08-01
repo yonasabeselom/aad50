@@ -21,7 +21,7 @@
     <img src="https://img.shields.io/badge/code%20licence-GPL%20v3-blue" alt="Code Licence"/>
   </a>
   <a href="https://github.com/yonasabeselom/aad50/blob/main/LICENSE">
-    <img src="https://img.shields.io/badge/spec%20licence-Proprietary-red" alt="Spec Licence"/>
+    <img src="https://img.shields.io/badge/spec%20licence-CC%20BY%204.0-green" alt="Spec Licence"/>
   </a>
   <a href="https://sourceforge.net/projects/aad50/">
     <img src="https://img.shields.io/badge/SourceForge-aad50-orange?logo=sourceforge" alt="SourceForge"/>
@@ -652,7 +652,7 @@ AAD-50 uses a dual licence — see [LICENSE](./LICENSE) for full terms.
 
 **Source Code** (`aad50_abeselom.py`, `aad50_abeselom_windows.py`, `aad50_gui_windows.py`, `AAD50.exe`) — **GNU General Public License (GPL).** You may use, modify, redistribute, fork, and build on the code freely under the terms of the GPL. Any derivative works or software that incorporates this code must also be released under the GPL (copyleft). The "AAD-50" name and logo are not covered by the code licence and remain the author's; published forks should not imply official endorsement or origin.
 
-**Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — Proprietary, all rights reserved. You may read, study, reference, and cite the specification, and share it in its original unmodified form with attribution to Yonas Abeselom and a link to this repository. You may implement the AAD-50 protocol in your own original code for personal, non-commercial use. Modifying, adapting, or creating derivative works of the specification, incorporating it into a commercial product, or using the AAD-50 name/branding requires prior written permission.
+**Specification and Whitepaper** (`AAD50_Abeselom_Whitepaper.pdf`, `AAD50_User_Manual.pdf`, `README.md`, and all specification documentation) — **Creative Commons Attribution 4.0 International (CC BY 4.0).** You are free to share and adapt this material for any purpose, including commercially, provided you give appropriate credit to Yonas Abeselom, include a link to the licence, and indicate if changes were made. The "AAD-50" name and logo are not covered by CC BY 4.0 and remain the author's property — published works may not imply official endorsement or origin without written permission. Cite as: Abeselom, Y. (2026). The Abeselom ASIC-Direct 50 (AAD-50). Zenodo. https://doi.org/10.5281/zenodo.20839417
 
 The specification is governed by the laws of Ethiopia and protected internationally under the Berne Convention, TRIPS, and the WIPO Copyright Treaty. The source code is governed by the terms of the GNU General Public License (GPL).
 
