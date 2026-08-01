@@ -41,10 +41,10 @@ provide a link to the licence, and indicate if changes were made. You may
 do so in any reasonable manner, but not in any way that suggests the
 author endorses you or your use. Recommended citation format:
 
-  Abeselom, Y. (2026). The Abeselom ASIC-Direct 50 (AAD-50):
-  Firmware-Enforced Flash Sanitization Specification for NVMe
-  Solid-State Storage (Version 1.1). Zenodo.
-  https://doi.org/10.5281/zenodo.20839417
+Abeselom, Y. (2026). The Abeselom ASIC-Direct 50 (AAD-50):
+Firmware-Enforced Flash Sanitization Specification for NVMe
+Solid-State Storage (Version 1.1). Zenodo.
+https://doi.org/10.5281/zenodo.20839417
 
 2. RESTRICTIONS — WRITTEN PERMISSION REQUIRED
 The following additional restrictions apply regardless of CC BY 4.0:
