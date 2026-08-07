@@ -549,6 +549,24 @@ A standalone Windows privacy cleaning utility with its own dedicated repository.
 > **AAD-50** handles firmware-level NVMe drive sanitization (all NAND cells including over-provisioned zones, FTL mapping, cryptographic keys).  
 > Together they cover the full stack — from the Windows registry down to the raw NAND cells.
 
+### TRACE 1.0 — Windows Forensic Exposure Scanner
+
+A standalone Windows forensic artifact scanner that detects, scores, and reports on 100 high-value forensic artifacts across your system — giving you a precise picture of your digital exposure risk before you clean.
+
+📦 **[Download on SourceForge](https://sourceforge.net/projects/trace/)** &nbsp;|&nbsp; 🐙 **[Dedicated GitHub Repository](https://github.com/yonasabeselom/trace)**
+
+- **100 forensic artifacts** scanned across 3 risk tiers — HIGH / MEDIUM / LOW
+- **Weighted exposure score 0–100** — every artifact scored by forensic significance
+- **Real-time colour-coded terminal output** — found vs not found per artifact
+- **PDF report** saved to Desktop — cover page, full results table, tier breakdown
+- **Auto-elevates to Administrator** on launch — no manual UAC steps needed
+- **Zero install, fully offline** — no internet connection, no telemetry
+
+> **TRACE** shows you exactly what forensic evidence exists on your machine.  
+> **REDACT 3** cleans it at the OS level.  
+> **AAD-50** erases it at the firmware level down to the raw NAND cells.  
+> Use all three for full-stack privacy coverage — from artifact discovery to physical erasure.
+
 ---
 
 ## Write-up
